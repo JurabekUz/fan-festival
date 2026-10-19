@@ -1,0 +1,19 @@
+# /etc/systemd/system/formula.service
+[Unit]
+Description=FORMULA-2026 festival app
+After=network.target
+
+[Service]
+User=formula
+Group=formula
+WorkingDirectory=/opt/formula2026
+# --workers 1 MAJBURIY: jonli o'yin holati xotirada, SQLite bitta yozuvchi bilan ishlaydi
+ExecStart=/opt/formula2026/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1 --proxy-headers --forwarded-allow-ips 127.0.0.1
+Restart=always
+RestartSec=2
+NoNewPrivileges=true
+ProtectSystem=full
+ReadWritePaths=/opt/formula2026/data /opt/formula2026/backups
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="uz-Latn"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FORMULA–2026 · Nomlar maydoni (demo)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+:root{--bg:#060a20;--line:rgba(170,182,255,.2);--fg:#eef1ff;--muted:#a3abd6;--amber:#f6b938;--teal:#4fd6c4;--lav:#a3acf5;--coral:#ff7a5c;
+--f-display:"Unbounded","Golos Text",system-ui,sans-serif;--f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;--f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+--th:40px;--cols:6;color-scheme:dark}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html,body{margin:0;min-height:100%}
+body{background:radial-gradient(ellipse at 50% -10%,#1b2670 0,var(--bg) 62%) fixed;color:var(--fg);font:16px/1.4 var(--f-body);min-height:100vh;overflow-x:hidden}
+header{display:grid;grid-template-columns:auto 1fr auto;gap:10px 20px;align-items:center;padding:12px clamp(12px,2.5vw,28px)}
+.brand{font-family:var(--f-display);font-weight:700;letter-spacing:.04em;font-size:clamp(12px,1.4vw,16px);color:var(--amber);text-decoration:none}
+.title{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;justify-content:center;text-align:center;min-width:0}
+.title .rnd{font-family:var(--f-display);font-weight:900;font-size:clamp(20px,3vw,40px)}
+.title .prize{font-family:var(--f-display);font-weight:700;font-size:clamp(15px,2.2vw,28px);color:var(--amber)}
+.tools{display:flex;gap:8px;align-items:center}
+.tools button{border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--fg);padding:7px 12px;border-radius:10px;font:inherit;font-size:14px;cursor:pointer}
+.tools button[aria-pressed=true]{background:var(--amber);color:#0c1230;border-color:var(--amber);font-weight:600}
+@media (max-width:640px){header{grid-template-columns:1fr auto}.title{grid-column:1/-1;grid-row:2}}
+
+/* holat qatori */
+.status{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 28px;padding:0 16px 12px}
+.big{font-family:var(--f-mono);font-weight:700;font-size:clamp(34px,6vw,72px);line-height:1}
+.big.warn{color:var(--coral)}
+.lbl{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.stat{display:flex;flex-direction:column;align-items:center;gap:4px}
+.msg{font-size:clamp(15px,1.8vw,22px);color:var(--muted);text-align:center}
+.live{display:inline-flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:13px;letter-spacing:.12em;color:var(--muted)}
+.live i{width:10px;height:10px;border-radius:50%;background:var(--coral);animation:pulse 1.4s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,122,92,.7)}70%{box-shadow:0 0 0 12px rgba(255,122,92,0)}100%{box-shadow:0 0 0 0 rgba(255,122,92,0)}}
+
+/* nomlar maydoni */
+#grid{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:6px;padding:0 clamp(10px,2vw,24px) 24px}
+.tile{height:var(--th);border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 8px;
+  font-weight:700;font-size:calc(var(--th)*.38);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  background:rgba(163,172,245,.14);border:1px solid rgba(163,172,245,.35);color:var(--fg);
+  transition:opacity .5s,filter .5s,transform .5s,background .3s,border-color .3s}
+.tile span{overflow:hidden;text-overflow:ellipsis}
+body.cd .tile{animation:breathe 2.4s ease-in-out infinite;animation-delay:calc(var(--i)*-37ms)}
+@keyframes breathe{50%{background:rgba(79,214,196,.18);border-color:rgba(79,214,196,.5)}}
+.tile.hot{background:rgba(246,185,56,.35);border-color:var(--amber);transform:scale(1.04)}
+.tile.drop{animation:shake .55s ease-in-out}
+@keyframes shake{20%{transform:translateX(-4px) rotate(-2deg)}40%{transform:translateX(4px) rotate(2deg)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
+.tile.out{opacity:.13;filter:grayscale(1);transform:scale(.92);background:rgba(255,255,255,.03);border-color:transparent}
+.tile.win{background:var(--amber);color:#0c1230;border-color:#fff;transform:scale(1.06);box-shadow:0 0 24px rgba(246,185,56,.6);z-index:1}
+
+/* g'oliblar ekrani */
+#winbox{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:rgba(4,7,24,.82);backdrop-filter:blur(4px);padding:24px;overflow:auto}
+.winin{max-width:1100px;width:100%;text-align:center}
+.winin h2{font-family:var(--f-display);font-weight:900;font-size:clamp(26px,5vw,60px);margin:0 0 6px}
+.winin .pz{font-family:var(--f-display);color:var(--amber);font-size:clamp(16px,2.4vw,30px);margin-bottom:24px}
+.wlist{display:flex;flex-wrap:wrap;justify-content:center;gap:14px}
+.wcard{min-width:200px;padding:16px 22px;border-radius:18px;background:rgba(246,185,56,.14);border:2px solid var(--amber);animation:pop .6s both}
+.wcard .n{font-family:var(--f-display);font-weight:700;font-size:clamp(20px,3vw,38px)}
+.wcard .p{font-family:var(--f-mono);color:var(--muted);font-size:14px;margin-top:4px}
+@keyframes pop{from{opacity:0;transform:translateY(20px) scale(.9)}to{opacity:1;transform:none}}
+.winin .close{margin-top:26px;border:1px solid var(--line);background:rgba(255,255,255,.08);color:var(--fg);padding:9px 16px;border-radius:10px;font:inherit;cursor:pointer}
+
+/* demo boshqaruvi */
+#demo{position:fixed;right:12px;bottom:12px;z-index:30;width:min(340px,calc(100vw - 24px));background:#0f1640;border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 30px rgba(0,0,0,.5)}
+#demo summary{cursor:pointer;padding:12px 14px;font-weight:700;list-style:none;display:flex;justify-content:space-between}
+#demo summary::after{content:"▾";color:var(--muted)}#demo[open] summary::after{content:"▴"}
+#demo .body{padding:0 14px 14px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#demo label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+#demo input,#demo select{background:#070b26;color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:7px 8px;font:inherit;font-size:14px;width:100%}
+#demo .full{grid-column:1/-1}
+#demo .go{grid-column:1/-1;display:flex;gap:8px}
+#demo button{flex:1;border:0;border-radius:10px;padding:10px;font:inherit;font-weight:700;cursor:pointer;background:var(--amber);color:#0c1230}
+#demo button.g{background:#1b2554;color:var(--fg)}
+#demo .note{grid-column:1/-1;font-size:12px;color:var(--muted)}
+#conf{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:25}
+@media (prefers-reduced-motion: reduce){.tile,body.cd .tile{animation:none!important;transition:none}}
+</style></head><body>
+<header>
+  <a class="brand" href="/">FORMULA–2026</a>
+  <div class="title"><span class="rnd" id="rnd">Raund #—</span><span class="prize" id="prize"></span></div>
+  <div class="tools"><span class="live" id="live" hidden><i></i>DEMO</span><button id="sc-cyr" type="button" aria-pressed="false">Кирил</button><button id="sc-lat" type="button" aria-pressed="true">Lotin</button><button id="fs" type="button" title="To'liq ekran">⛶</button></div>
+</header>
+<div class="status">
+  <div class="stat" id="s-cd" hidden><div class="big" id="cd">00:00</div><div class="lbl" id="cd-l"></div></div>
+  <div class="stat"><div class="big" id="left">0</div><div class="lbl" id="left-l"></div></div>
+  <div class="stat" id="s-win"><div class="big" style="color:var(--amber)" id="nwin">—</div><div class="lbl" id="nwin-l"></div></div>
+  <div class="msg" id="msg"></div>
+</div>
+<div id="grid"></div>
+
+<div id="winbox" hidden><div class="winin"><h2 id="w-h"></h2><div class="pz" id="w-pz"></div><div class="wlist" id="wlist"></div><button class="close" id="w-close"></button></div></div>
+<canvas id="conf"></canvas>
+
+<details id="demo" open>
+  <summary>⚙ Demo boshqaruvi</summary>
+  <div class="body">
+    <label>Maydondagilar<input id="o-k" type="number" min="1" max="400" value="60"></label>
+    <label>Usul<select id="o-mode"><option value="top_n">N ta g'olib</option><option value="chance">p% ehtimol</option></select></label>
+    <label id="o-nl">G'oliblar (N)<input id="o-n" type="number" min="1" value="5"></label>
+    <label id="o-pl" hidden>Ehtimol %<input id="o-p" type="number" min="1" max="100" value="10"></label>
+    <label>Taymer, s<input id="o-cd" type="number" min="0" max="600" value="5"></label>
+    <label>Aylanish, s<input id="o-spin" type="number" min="8" max="120" value="20"></label>
+    <label class="full">Sovg'a<input id="o-prize" value="Planshet"></label>
+    <div class="go"><button id="o-go">▶ Boshlash</button><button class="g" id="o-reset">↺ Qayta</button></div>
+    <div class="note">Bu sinov sahifasi: soxta ismlar, bazaga hech narsa yozilmaydi. Panelni yig'ib qo'yish uchun sarlavhani bosing.</div>
+  </div>
+</details>
+
+<script>
+const $=id=>document.getElementById(id);
+/* ---------- matnlar (lotin / kirill) ---------- */
+const TXT={
+ lat:{round:"Raund",prize:"Sovg'a",left:"o'yinda qoldi",winners:"g'olib",chanceW:"har biriga",cdL:"boshlanishiga",
+  wait:"Taymer tugashi bilan nomlar o'cha boshlaydi",spin:"Kimning nomi oxirigacha qoladi?",last:"Oxirgi soniyalar…",
+  done:"G'oliblar!",none:"Bu safar g'olib chiqmadi",idle:"Demo panelidan raundni boshlang",close:"Yopish",unknown:"?"},
+ cyr:{round:"Раунд",prize:"Совға",left:"ўйинда қолди",winners:"ғолиб",chanceW:"ҳар бирига",cdL:"бошланишига",
+  wait:"Таймер тугаши билан номлар ўча бошлайди",spin:"Кимнинг номи охиригача қолади?",last:"Охирги сониялар…",
+  done:"Ғолиблар!",none:"Бу сафар ғолиб чиқмади",idle:"Демо панелидан раундни бошланг",close:"Ёпиш",unknown:"?"}};
+let script="lat";try{script=localStorage.getItem("ff-script")==="cyr"?"cyr":"lat"}catch(e){}
+const t=k=>TXT[script][k];
+function setScript(s){script=s;try{localStorage.setItem("ff-script",s)}catch(e){}
+  $("sc-cyr").setAttribute("aria-pressed",String(s==="cyr"));$("sc-lat").setAttribute("aria-pressed",String(s==="lat"));
+  document.documentElement.lang=s==="lat"?"uz-Latn":"uz-Cyrl";paintStatic();paintWin()}
+$("sc-cyr").onclick=()=>setScript("cyr");$("sc-lat").onclick=()=>setScript("lat");
+$("fs").onclick=()=>{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen?.()};
+
+/* ---------- holat (keyin serverdan keladigan shaklda) ----------
+  st = {status:"idle|countdown|spinning|done", number, prize, mode, n, chance_pct,
+        names:[{name,passport_no}], countdown_ends_ms, spin_start_ms, spin_end_ms,
+        out:[{i, at_ms}]  // o'chish tartibi va vaqti, winners:[indekslar]} */
+let st={status:"idle"};const now=()=>Date.now();
+
+/* ---------- demo: soxta maydon va natija ---------- */
+const FIRST=["Aziz","Dilnoza","Jasur","Madina","Bekzod","Zilola","Sardor","Nigora","Otabek","Malika","Sherzod","Gulnora","Javohir","Sevara","Ulugʻbek","Shahzoda","Doniyor","Kamola","Islom","Mohira","Timur","Laylo","Abdulloh","Muslima","Sanjar","Nilufar","Rustam","Feruza","Akmal","Diyora"];
+const LETTERS="ABDEFGHIJKLMNOPQRSTUVXYZ";
+const R=n=>Math.floor(Math.random()*n);
+function fakeNames(k){return Array.from({length:k},(_,i)=>({name:FIRST[R(FIRST.length)]+" "+LETTERS[R(LETTERS.length)]+".",passport_no:"F26-"+String(i+1).padStart(4,"0")}))}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=R(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
+/* o'chish vaqtlari: boshida tez, oxirida sekin (ease-out teskari funksiyasi) */
+function schedule(k,winners,start,spinMs){
+  const losers=shuffle([...Array(k).keys()].filter(i=>!winners.includes(i)));
+  const T=spinMs-2200,P=1.6,L=losers.length;
+  return losers.map((i,idx)=>({i,at_ms:start+Math.round(T*(1-Math.pow(1-(idx+1)/L,1/P)))}));
+}
+function demoStart(){
+  const k=Math.max(1,Math.min(400,+$("o-k").value||60)),mode=$("o-mode").value,n=Math.max(1,+$("o-n").value||1),p=Math.min(100,Math.max(1,+$("o-p").value||10));
+  const cd=Math.max(0,+$("o-cd").value||0)*1000,spin=Math.min(120,Math.max(8,+$("o-spin").value||20))*1000;
+  const names=fakeNames(k);
+  const winners=mode==="top_n"?shuffle([...Array(k).keys()]).slice(0,Math.min(n,k)):[...Array(k).keys()].filter(()=>Math.random()*100<p);
+  const t0=now()+cd;
+  st={status:cd?"countdown":"spinning",number:(st.number||0)+1,prize:$("o-prize").value.trim(),mode,n,chance_pct:p,names,
+      countdown_ends_ms:t0,spin_start_ms:t0,spin_end_ms:t0+spin,out:schedule(k,winners,t0,spin),winners};
+  $("demo").open=false;
+  build();paintStatic();
+}
+$("o-go").onclick=demoStart;
+$("o-reset").onclick=()=>{st={status:"idle",number:st.number};build();paintStatic()};
+$("o-mode").onchange=()=>{const top=$("o-mode").value==="top_n";$("o-nl").hidden=!top;$("o-pl").hidden=top};
+
+/* ---------- chizish ---------- */
+let tiles=[],outPtr=0,shownDone=false;
+function build(){
+  const g=$("grid");g.innerHTML="";tiles=[];outPtr=0;shownDone=false;$("winbox").hidden=true;
+  (st.names||[]).forEach((x,i)=>{const d=document.createElement("div");d.className="tile";d.style.setProperty("--i",i);
+    const s=document.createElement("span");s.textContent=x.name;d.title=x.name+" · "+x.passport_no;d.append(s);g.append(d);tiles.push(d)});
+  layout();
+}
+/* plitkalar ekranga sig'adigan eng katta o'lcham */
+function layout(){
+  const k=tiles.length;if(!k)return;
+  const g=$("grid"),W=g.clientWidth-parseFloat(getComputedStyle(g).paddingLeft)*2,gap=6;
+  const H=Math.max(240,innerHeight-g.getBoundingClientRect().top-window.scrollY-20);
+  const MINW=108;   // ism o'qiladigan eng kichik plitka eni
+  let best=null;
+  for(let cols=1;cols<=Math.min(k,40);cols++){
+    const tw=(W-gap*(cols-1))/cols,th=Math.min(tw/2.7,72),rows=Math.ceil(k/cols);
+    if(tw<MINW)break;
+    if(rows*th+gap*(rows-1)<=H){best={cols,th};break}
+  }
+  if(!best){  // sig'masa — o'qiladigan o'lcham, sahifa pastga aylanadi
+    const cols=Math.max(1,Math.floor((W+gap)/(MINW+gap))),tw=(W-gap*(cols-1))/cols;
+    best={cols,th:Math.max(30,Math.min(44,tw/2.9))}}
+  document.documentElement.style.setProperty("--cols",best.cols);
+  document.documentElement.style.setProperty("--th",Math.max(22,Math.floor(best.th))+"px");
+}
+addEventListener("resize",layout);
+const mmss=ms=>{const s=Math.max(0,Math.ceil(ms/1000));return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")};
+function remaining(){return tiles.length-outPtr}
+function paintStatic(){
+  $("rnd").textContent=st.status==="idle"&&!st.names?"FORMULA–2026":t("round")+" #"+(st.number??"—");
+  $("prize").textContent=st.prize?t("prize")+": "+st.prize:"";
+  $("left-l").textContent=t("left");
+  $("nwin").textContent=st.mode==="chance"?(st.chance_pct+"%"):(st.n??"—");
+  $("nwin-l").textContent=st.mode==="chance"?t("chanceW"):t("winners");
+  $("s-win").hidden=!st.names;$("cd-l").textContent=t("cdL");
+  $("w-close").textContent=t("close");
+}
+function frame(){
+  const tm=now(),s=st;
+  document.body.classList.toggle("cd",s.status==="countdown");
+  $("live").hidden=!(s.status==="countdown"||s.status==="spinning");
+  // holat o'tishlari (serverda ham shunday bo'ladi)
+  if(s.status==="countdown"&&tm>=s.countdown_ends_ms)s.status="spinning";
+  if(s.status==="spinning"&&tm>=s.spin_end_ms)s.status="done";
+  // taymer
+  $("s-cd").hidden=s.status!=="countdown";
+  if(s.status==="countdown"){const left=s.countdown_ends_ms-tm;$("cd").textContent=mmss(left);$("cd").classList.toggle("warn",left<=5000)}
+  // o'chirish
+  if(s.status==="spinning"||s.status==="done"){
+    while(outPtr<s.out.length&&s.out[outPtr].at_ms<=tm){
+      const el=tiles[s.out[outPtr].i];el.classList.remove("hot");
+      if(remaining()<=(s.winners.length+4)){el.classList.add("drop");setTimeout(()=>el.classList.add("out"),520)}else el.classList.add("out");
+      outPtr++}
+  }
+  $("left").textContent=s.names?remaining():"0";
+  $("msg").textContent=s.status==="idle"?t("idle"):s.status==="countdown"?t("wait"):s.status==="spinning"?(remaining()<=s.winners.length+4?t("last"):t("spin")):(s.winners.length?t("done"):t("none"));
+  if(s.status==="done"&&!shownDone){shownDone=true;s.winners.forEach(i=>tiles[i].classList.add("win"));setTimeout(()=>{paintWin();$("winbox").hidden=false;if(s.winners.length)confetti()},900)}
+  requestAnimationFrame(frame);
+}
+/* aylanish paytida qolganlar orasida "yugurib yuruvchi" yorug'lik */
+setInterval(()=>{
+  if(st.status!=="spinning")return;
+  tiles.forEach(x=>x.classList.remove("hot"));
+  const alive=tiles.filter(x=>!x.classList.contains("out"));
+  for(let j=0;j<Math.min(3,alive.length);j++)alive[R(alive.length)].classList.add("hot");
+},140);
+function paintWin(){
+  if(!st.names||st.status!=="done")return;
+  $("w-h").textContent=st.winners.length?t("done"):t("none");
+  $("w-pz").textContent=st.prize?t("prize")+": "+st.prize:"";
+  const box=$("wlist");box.innerHTML="";
+  st.winners.forEach((i,j)=>{const c=document.createElement("div");c.className="wcard";c.style.animationDelay=(j*.25)+"s";
+    c.innerHTML='<div class="n"></div><div class="p"></div>';c.children[0].textContent=st.names[i].name;c.children[1].textContent=st.names[i].passport_no;box.append(c)});
+}
+$("w-close").onclick=()=>{$("winbox").hidden=true};
+
+/* ---------- konfetti ---------- */
+function confetti(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const c=$("conf"),x=c.getContext("2d"),W=c.width=innerWidth,H=c.height=innerHeight,cols=["#f6b938","#4fd6c4","#a3acf5","#ff7a5c","#fff"];
+  const ps=Array.from({length:240},()=>({x:W*(.2+Math.random()*.6),y:H*.3,vx:(Math.random()-.5)*16,vy:-Math.random()*15-4,s:Math.random()*8+4,c:cols[R(5)],r:Math.random()*6}));
+  const t0=performance.now();
+  (function f(tt){x.clearRect(0,0,W,H);ps.forEach(p=>{p.vy+=.3;p.x+=p.vx;p.y+=p.vy;p.r+=.12;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);x.restore()});
+    if(tt-t0<3800)requestAnimationFrame(f);else x.clearRect(0,0,W,H)})(t0);
+}
+
+setScript(script);
+st={status:"idle",names:fakeNames(60),mode:"top_n",n:5,number:0};build();st.names=null;paintStatic();
+requestAnimationFrame(frame);
+</script></body></html>

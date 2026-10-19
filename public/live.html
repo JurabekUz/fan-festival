@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="uz-Cyrl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FORMULA–2026 · Жонли танлов</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+:root{--bg:#060a20;--line:rgba(170,182,255,.2);--fg:#eef1ff;--muted:#a3abd6;--amber:#f6b938;--teal:#4fd6c4;--lav:#a3acf5;--coral:#ff7a5c;
+--f-display:"Unbounded","Golos Text",system-ui,sans-serif;--f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;--f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+--th:40px;--cols:6;color-scheme:dark}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html,body{margin:0;min-height:100%}
+body{background:radial-gradient(ellipse at 50% -10%,#1b2670 0,var(--bg) 62%) fixed;color:var(--fg);font:16px/1.4 var(--f-body);min-height:100vh;overflow-x:hidden}
+header{display:grid;grid-template-columns:auto 1fr auto;gap:10px 20px;align-items:center;padding:12px clamp(12px,2.5vw,28px)}
+.lefthead{display:flex;align-items:center;gap:12px;min-width:0}
+.back{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--fg);padding:7px 12px;border-radius:10px;font-size:14px;text-decoration:none;white-space:nowrap}
+.back:hover{background:rgba(255,255,255,.12)}
+@media (max-width:640px){.lefthead .brand{display:none}}
+.brand{font-family:var(--f-display);font-weight:700;letter-spacing:.04em;font-size:clamp(12px,1.4vw,16px);color:var(--amber);text-decoration:none}
+.title{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;justify-content:center;text-align:center;min-width:0}
+.title .rnd{font-family:var(--f-display);font-weight:900;font-size:clamp(20px,3vw,40px)}
+.title .prize{font-family:var(--f-display);font-weight:700;font-size:clamp(15px,2.2vw,28px);color:var(--amber);word-break:break-word}
+.tools{display:flex;gap:8px;align-items:center}
+.tools button{border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--fg);padding:7px 12px;border-radius:10px;font:inherit;font-size:14px;cursor:pointer}
+.tools button[aria-pressed=true]{background:var(--amber);color:#0c1230;border-color:var(--amber);font-weight:600}
+@media (max-width:640px){header{grid-template-columns:1fr auto}.title{grid-column:1/-1;grid-row:2}}
+.live{display:inline-flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:13px;letter-spacing:.12em;color:var(--muted)}
+.live i{width:10px;height:10px;border-radius:50%;background:var(--coral);animation:pulse 1.4s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,122,92,.7)}70%{box-shadow:0 0 0 12px rgba(255,122,92,0)}100%{box-shadow:0 0 0 0 rgba(255,122,92,0)}}
+
+/* holat qatori */
+.status{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 28px;padding:0 16px 12px}
+.big{font-family:var(--f-mono);font-weight:700;font-size:clamp(34px,6vw,72px);line-height:1}
+.big.warn{color:var(--coral)}
+.lbl{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:center}
+.stat{display:flex;flex-direction:column;align-items:center;gap:4px}
+.msg{font-size:clamp(15px,1.8vw,22px);color:var(--muted);text-align:center}
+.mepill{margin:0 auto 12px;width:fit-content;max-width:calc(100% - 32px);padding:8px 16px;border-radius:999px;font-weight:600;text-align:center;
+  background:rgba(79,214,196,.14);border:1px solid rgba(79,214,196,.5);color:var(--teal)}
+.mepill.lost{background:rgba(255,255,255,.05);border-color:var(--line);color:var(--muted)}
+.mepill.won{background:var(--amber);border-color:var(--amber);color:#0c1230;font-size:18px}
+
+/* nomlar maydoni */
+#grid{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:6px;padding:0 clamp(10px,2vw,24px) 24px}
+.tile{position:relative;height:var(--th);border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 8px;
+  font-weight:700;font-size:calc(var(--th)*.38);white-space:nowrap;overflow:hidden;
+  background:rgba(163,172,245,.14);border:1px solid rgba(163,172,245,.35);color:var(--fg);
+  transition:opacity .5s,filter .5s,transform .5s,background .3s,border-color .3s}
+.tile span{overflow:hidden;text-overflow:ellipsis}
+body.cd .tile{animation:breathe 2.4s ease-in-out infinite;animation-delay:calc(var(--i)*-37ms)}
+@keyframes breathe{50%{background:rgba(79,214,196,.18);border-color:rgba(79,214,196,.5)}}
+.tile.hot{background:rgba(246,185,56,.35);border-color:var(--amber);transform:scale(1.04)}
+.tile.drop{animation:shake .55s ease-in-out}
+@keyframes shake{20%{transform:translateX(-4px) rotate(-2deg)}40%{transform:translateX(4px) rotate(2deg)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
+.tile.out{opacity:.13;filter:grayscale(1);transform:scale(.92);background:rgba(255,255,255,.03);border-color:transparent}
+.tile.win{background:var(--amber);color:#0c1230;border-color:#fff;transform:scale(1.06);box-shadow:0 0 24px rgba(246,185,56,.6);z-index:1}
+.tile.me{border:3px solid var(--teal);box-shadow:0 0 0 3px rgba(79,214,196,.25)}
+.tile.me.out{opacity:.35;border-style:dashed}
+.tile.me::after{content:attr(data-me);position:absolute;top:0;right:0;font-size:10px;line-height:1;padding:3px 5px;border-bottom-left-radius:8px;background:var(--teal);color:#0c1230;font-weight:800;letter-spacing:.04em}
+
+/* kutish holati */
+#idle{max-width:760px;margin:6vh auto 0;padding:0 16px;text-align:center}
+#idle h2{font-family:var(--f-display);font-size:clamp(22px,3.6vw,40px);margin:0 0 10px}
+#idle p{color:var(--muted);margin:0 0 22px}
+.recent{display:flex;flex-direction:column;gap:10px;text-align:left}
+.rr{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:rgba(255,255,255,.04)}
+.rr .h{font-size:13px;color:var(--muted);margin-bottom:6px}.rr .h b{color:var(--amber)}
+.rr .w{display:flex;flex-wrap:wrap;gap:6px}
+.rr .w span{padding:4px 10px;border-radius:999px;background:rgba(246,185,56,.14);border:1px solid rgba(246,185,56,.4);font-weight:600}
+
+/* g'oliblar ekrani */
+#winbox{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:rgba(4,7,24,.82);backdrop-filter:blur(4px);padding:24px;overflow:auto}
+.winin{max-width:1100px;width:100%;text-align:center}
+.winin h2{font-family:var(--f-display);font-weight:900;font-size:clamp(26px,5vw,60px);margin:0 0 6px}
+.winin .pz{font-family:var(--f-display);color:var(--amber);font-size:clamp(16px,2.4vw,30px);margin-bottom:24px}
+.wlist{display:flex;flex-wrap:wrap;justify-content:center;gap:14px}
+.wcard{min-width:200px;padding:16px 22px;border-radius:18px;background:rgba(246,185,56,.14);border:2px solid var(--amber);animation:pop .6s both}
+.wcard.me{background:var(--amber);color:#0c1230}.wcard.me .p{color:#0c1230}
+.wcard .n{font-family:var(--f-display);font-weight:700;font-size:clamp(20px,3vw,38px)}
+.wcard .p{font-family:var(--f-mono);color:var(--muted);font-size:14px;margin-top:4px}
+@keyframes pop{from{opacity:0;transform:translateY(20px) scale(.9)}to{opacity:1;transform:none}}
+.winin .close{margin-top:26px;border:1px solid var(--line);background:rgba(255,255,255,.08);color:var(--fg);padding:9px 16px;border-radius:10px;font:inherit;cursor:pointer}
+.offline{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:30;padding:8px 14px;border-radius:10px;background:#3a1420;border:1px solid var(--coral);color:#ffd2c7;font-size:14px}
+#conf{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:25}
+@media (prefers-reduced-motion: reduce){.tile,body.cd .tile{animation:none!important;transition:none}}
+</style></head><body>
+<header>
+  <div class="lefthead"><a class="back" id="back" href="/"><span aria-hidden="true">←</span> <span id="back-t"></span></a><a class="brand" href="/">FORMULA–2026</a></div>
+  <div class="title"><span class="rnd" id="rnd"></span><span class="prize" id="prize"></span></div>
+  <div class="tools"><span class="live" id="live" hidden><i></i><span id="live-t"></span></span><button id="sc-cyr" type="button" aria-pressed="true">Кирил</button><button id="sc-lat" type="button" aria-pressed="false">Lotin</button><button id="fs" type="button" title="Full screen">⛶</button></div>
+</header>
+<div id="stage" hidden>
+  <div class="status">
+    <div class="stat" id="s-cd" hidden><div class="big" id="cd">00:00</div><div class="lbl" id="cd-l"></div></div>
+    <div class="stat"><div class="big" id="left">0</div><div class="lbl" id="left-l"></div></div>
+    <div class="stat" id="s-win"><div class="big" style="color:var(--amber)" id="nwin">—</div><div class="lbl" id="nwin-l"></div></div>
+    <div class="msg" id="msg"></div>
+  </div>
+  <div class="mepill" id="me" hidden></div>
+  <div id="grid"></div>
+</div>
+<div id="idle" hidden><h2 id="idle-h"></h2><p id="idle-p"></p><div class="recent" id="recent"></div></div>
+<div id="winbox" hidden><div class="winin"><h2 id="w-h"></h2><div class="pz" id="w-pz"></div><div class="wlist" id="wlist"></div><button class="close" id="w-close"></button></div></div>
+<div class="offline" id="offline" hidden></div>
+<canvas id="conf"></canvas>
+
+<script>
+const $=id=>document.getElementById(id);
+/* ---------- matnlar (kirill / lotin) ---------- */
+const TXT={
+ cyr:{round:"Раунд",prize:"Совға",left:"ўйинда қолди",winners:"ғолиб",chanceW:"ҳар бирига",cdL:"бошланишига",
+  wait:"Таймер тугаши билан номлар ўча бошлайди",paused:"Танаффус — тез орада давом этади",spin:"Кимнинг номи охиригача қолади?",last:"Охирги сониялар…",
+  done:"Ғолиблар!",none:"Бу сафар ғолиб чиқмади",close:"Ёпиш",live:"ЖОНЛИ",idleH:"Кейинги раунд тез орада",
+  idleP:"Шу саҳифани очиқ қолдиринг — раунд бошланганда ҳамма номлар шу ерда пайдо бўлади.",recent:"Сўнгги ғолиблар",
+  backHome:"Бош саҳифа",backMod:"Модератор панели",you:"СИЗ",meIn:"Сиз ўйиндасиз — омад!",meOut:"Афсус, бу сафар омад кулиб боқмади",meWon:"🎉 Табриклаймиз, сиз ютдингиз!",offline:"Алоқа йўқ — қайта уланмоқда…",error:"Раунд бошланмади"},
+ lat:{round:"Raund",prize:"Sovg'a",left:"o'yinda qoldi",winners:"g'olib",chanceW:"har biriga",cdL:"boshlanishiga",
+  wait:"Taymer tugashi bilan nomlar o'cha boshlaydi",paused:"Tanaffus — tez orada davom etadi",spin:"Kimning nomi oxirigacha qoladi?",last:"Oxirgi soniyalar…",
+  done:"G'oliblar!",none:"Bu safar g'olib chiqmadi",close:"Yopish",live:"JONLI",idleH:"Keyingi raund tez orada",
+  idleP:"Shu sahifani ochiq qoldiring — raund boshlanganda hamma nomlar shu yerda paydo bo'ladi.",recent:"So'nggi g'oliblar",
+  backHome:"Bosh sahifa",backMod:"Moderator paneli",you:"SIZ",meIn:"Siz o'yindasiz — omad!",meOut:"Afsus, bu safar omad kulib boqmadi",meWon:"🎉 Tabriklaymiz, siz yutdingiz!",offline:"Aloqa yo'q — qayta ulanmoqda…",error:"Raund boshlanmadi"}};
+let script="cyr";try{script=localStorage.getItem("ff-script")==="lat"?"lat":"cyr"}catch(e){}
+const t=k=>TXT[script][k];
+function setScript(s){script=s;try{localStorage.setItem("ff-script",s)}catch(e){}
+  $("sc-cyr").setAttribute("aria-pressed",String(s==="cyr"));$("sc-lat").setAttribute("aria-pressed",String(s==="lat"));
+  document.documentElement.lang=s==="lat"?"uz-Latn":"uz-Cyrl";document.title="FORMULA–2026 · "+(s==="lat"?"Jonli tanlov":"Жонли танлов");
+  $("back-t").textContent=isMod?t("backMod"):t("backHome");
+  tiles.forEach(x=>x.dataset.me=t("you"));paint();paintRecent();if(!$("winbox").hidden)paintWin()}
+$("sc-cyr").onclick=()=>setScript("cyr");$("sc-lat").onclick=()=>setScript("lat");
+$("fs").onclick=()=>{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen?.()};
+
+/* ---------- server bilan aloqa ---------- */
+let st={status:"idle"},offset=0,online=true,rosterVer=null,names=[],myPno=null,isMod=false;
+let firstState=true,tiles=[],applied=0,shownDone=null,justFinished=false,myIdx=-1,scrolledToMe=false;
+const now=()=>Date.now()+offset;
+async function poll(){
+  const t0=Date.now();let next=3000;
+  try{const r=await fetch("/api/live",{cache:"no-store"});const d=await r.json();const t1=Date.now();
+    offset=d.server_ms-(t0+t1)/2;online=true;await onState(d);
+    next=["countdown","paused","spinning"].includes(d.status)?1000:3000}
+  catch(e){online=false;next=2000}
+  $("offline").hidden=online;$("offline").textContent=t("offline");
+  setTimeout(poll,document.hidden?4000:next);
+}
+async function onState(d){
+  const prevStatus=st.status;st=d;
+  if(d.roster_ver&&d.roster_ver!==rosterVer){
+    const ro=await (await fetch("/api/live/roster",{cache:"no-store"})).json();
+    rosterVer=ro.ver;names=ro.names;build();
+  }
+  if(d.status==="idle"){if(tiles.length){rosterVer=null;names=[];build()}loadRecent()}
+  if(!firstState&&d.status==="done"&&prevStatus!=="done")justFinished=true;   // faqat ko'z oldida tugagan raund uchun konfetti
+  firstState=false;
+  paint();
+}
+/* moderator — o'z paneliga, oddiy foydalanuvchi — bosh sahifaga qaytadi */
+async function loadWho(){try{const r=await fetch("/api/mod/whoami",{cache:"no-store"});isMod=r.ok}catch(e){isMod=false}
+  $("back").href=isMod?"/mod":"/";$("back-t").textContent=isMod?t("backMod"):t("backHome")}
+async function loadMe(){try{const r=await fetch("/api/me",{cache:"no-store"});if(r.ok){myPno=(await r.json()).passport_no;markMe()}}catch(e){}}
+let recent=[],recentAt=0;
+async function loadRecent(){if(Date.now()-recentAt<15000)return;recentAt=Date.now();
+  try{recent=(await (await fetch("/api/winners",{cache:"no-store"})).json()).rounds;paintRecent()}catch(e){}}
+function paintRecent(){
+  const box=$("recent");box.innerHTML="";
+  recent.filter(r=>r.winners.length).slice(0,5).forEach(r=>{
+    const d=document.createElement("div");d.className="rr";
+    const h=document.createElement("div");h.className="h";const b=document.createElement("b");b.textContent=t("round")+" #"+r.id;h.append(b);
+    if(r.prize)h.append(document.createTextNode(" · "+r.prize));
+    const w=document.createElement("div");w.className="w";r.winners.forEach(x=>{const s=document.createElement("span");s.textContent=x.name;w.append(s)});
+    d.append(h,w);box.append(d)});
+  if(box.children.length){const h=document.createElement("div");h.className="lbl";h.style.textAlign="left";h.textContent=t("recent");box.prepend(h)}
+}
+
+/* ---------- nomlar maydoni ---------- */
+function build(){
+  const g=$("grid");g.innerHTML="";tiles=[];applied=0;myIdx=-1;scrolledToMe=false;$("winbox").hidden=true;
+  names.forEach((x,i)=>{const d=document.createElement("div");d.className="tile";d.style.setProperty("--i",i);
+    const s=document.createElement("span");s.textContent=x.name;d.title=x.name+" · "+x.passport_no;d.append(s);g.append(d);tiles.push(d)});
+  markMe();layout();
+}
+function markMe(){
+  myIdx=myPno?names.findIndex(x=>x.passport_no===myPno):-1;
+  tiles.forEach((x,i)=>{x.classList.toggle("me",i===myIdx);x.dataset.me=t("you")});
+  if(myIdx>=0&&!scrolledToMe){scrolledToMe=true;const el=tiles[myIdx];const r=el.getBoundingClientRect();
+    if(r.top<0||r.bottom>innerHeight)setTimeout(()=>el.scrollIntoView({behavior:"smooth",block:"center"}),400)}
+}
+/* plitkalar ekranga sig'adigan eng katta o'lcham (ism o'qiladigan bo'lsin) */
+function layout(){
+  const k=tiles.length;if(!k)return;
+  const g=$("grid"),W=g.clientWidth-parseFloat(getComputedStyle(g).paddingLeft)*2,gap=6,MINW=108;
+  const H=Math.max(240,innerHeight-g.getBoundingClientRect().top-window.scrollY-20);
+  let best=null;
+  for(let cols=1;cols<=Math.min(k,40);cols++){
+    const tw=(W-gap*(cols-1))/cols,th=Math.min(tw/2.7,72),rows=Math.ceil(k/cols);
+    if(tw<MINW)break;
+    if(rows*th+gap*(rows-1)<=H){best={cols,th};break}
+  }
+  if(!best){const cols=Math.max(1,Math.floor((W+gap)/(MINW+gap))),tw=(W-gap*(cols-1))/cols;best={cols,th:Math.max(30,Math.min(44,tw/2.9))}}
+  document.documentElement.style.setProperty("--cols",best.cols);
+  document.documentElement.style.setProperty("--th",Math.max(22,Math.floor(best.th))+"px");
+}
+addEventListener("resize",layout);
+const mmss=ms=>{const s=Math.max(0,Math.ceil(ms/1000));return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")};
+const remaining=()=>tiles.length-tiles.filter(x=>x.classList.contains("out")).length;
+const isActive=()=>["countdown","paused","spinning"].includes(st.status);
+
+function paint(){
+  const s=st,idle=s.status==="idle",wasHidden=$("stage").hidden;
+  $("stage").hidden=idle;$("idle").hidden=!idle;
+  if(wasHidden&&!idle){layout();scrolledToMe=false;markMe()}   // yashirin paytda o'lcham 0 bo'ladi
+  $("live").hidden=!isActive();$("live-t").textContent=t("live");
+  if(idle){$("rnd").textContent="FORMULA–2026";$("prize").textContent="";
+    $("idle-h").textContent=s.error?t("error"):t("idleH");$("idle-p").textContent=s.error||t("idleP");return}
+  $("rnd").textContent=t("round")+" #"+(s.number??"");
+  $("prize").textContent=s.prize?t("prize")+": "+s.prize:"";
+  $("left-l").textContent=t("left");$("cd-l").textContent=t("cdL");$("w-close").textContent=t("close");
+  $("nwin").textContent=s.mode==="chance"?(s.chance_pct+"%"):(s.n??"—");
+  $("nwin-l").textContent=s.mode==="chance"?t("chanceW"):t("winners");
+}
+function lastStretch(){return remaining()<=(st.mode==="top_n"&&st.n?st.n+4:5)}
+function frame(){
+  const tm=now(),s=st;
+  document.body.classList.toggle("cd",s.status==="countdown"||s.status==="paused");
+  $("s-cd").hidden=!(s.status==="countdown"||s.status==="paused");
+  if(s.status==="countdown"||s.status==="paused"){
+    const left=s.status==="paused"?s.remaining_ms:s.countdown_ends_ms-tm;$("cd").textContent=mmss(left);$("cd").classList.toggle("warn",left<=5000||s.status==="paused")}
+  // o'chishlar: server faqat yaqin kelajakdagilarini beradi
+  const done=s.status==="done";
+  if((s.status==="spinning"||done)&&s.out&&tiles.length){
+    const late=done&&!justFinished;          // keyin ochilgan sahifa — animatsiyasiz
+    while(applied<s.out.length&&(done||s.spin_start_ms+s.out[applied][1]<=tm)){
+      const el=tiles[s.out[applied][0]];if(el){el.classList.remove("hot");
+        if(!late&&lastStretch()){el.classList.add("drop");setTimeout(()=>el.classList.add("out"),520)}else el.classList.add("out")}
+      applied++}
+  }
+  $("left").textContent=tiles.length?remaining():"0";
+  if(s.status!=="idle")$("msg").textContent=s.status==="countdown"?t("wait"):s.status==="paused"?t("paused"):s.status==="spinning"?(lastStretch()?t("last"):t("spin")):(s.winners&&s.winners.length?t("done"):t("none"));
+  paintMe();
+  if(done&&shownDone!==s.round_id&&tiles.length){
+    shownDone=s.round_id;const fresh=justFinished||tm-s.spin_end_ms<15000;justFinished=false;
+    (s.winners||[]).forEach(w=>tiles[w.idx]&&tiles[w.idx].classList.add("win"));
+    setTimeout(()=>{paintWin();$("winbox").hidden=false;if(fresh&&s.winners.length)confetti()},fresh?900:0)}
+  requestAnimationFrame(frame);
+}
+function paintMe(){
+  const p=$("me");if(myIdx<0||st.status==="idle"){p.hidden=true;return}
+  const el=tiles[myIdx];const won=st.status==="done"&&(st.winners||[]).some(w=>w.idx===myIdx);
+  const out=el&&el.classList.contains("out");
+  const cls="mepill"+(won?" won":out?" lost":""),txt=won?t("meWon"):out?t("meOut"):t("meIn");
+  p.hidden=false;if(p.className!==cls)p.className=cls;if(p.textContent!==txt)p.textContent=txt;
+}
+/* o'yin paytida qolganlar orasida yugurib yuruvchi yorug'lik */
+setInterval(()=>{
+  if(st.status!=="spinning")return;
+  tiles.forEach(x=>x.classList.remove("hot"));
+  const alive=tiles.filter(x=>!x.classList.contains("out"));
+  for(let j=0;j<Math.min(3,alive.length);j++)alive[Math.floor(Math.random()*alive.length)].classList.add("hot");
+},140);
+function paintWin(){
+  if(st.status!=="done")return;
+  $("w-h").textContent=st.winners&&st.winners.length?t("done"):t("none");
+  $("w-pz").textContent=st.prize?t("prize")+": "+st.prize:"";$("w-close").textContent=t("close");
+  const box=$("wlist");box.innerHTML="";
+  (st.winners||[]).forEach((w,j)=>{const c=document.createElement("div");c.className="wcard"+(w.idx===myIdx?" me":"");c.style.animationDelay=(j*.25)+"s";
+    c.innerHTML='<div class="n"></div><div class="p"></div>';c.children[0].textContent=w.name;c.children[1].textContent=w.passport_no;box.append(c)});
+}
+$("w-close").onclick=()=>{$("winbox").hidden=true};
+
+/* ---------- konfetti ---------- */
+function confetti(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const c=$("conf"),x=c.getContext("2d"),W=c.width=innerWidth,H=c.height=innerHeight,cols=["#f6b938","#4fd6c4","#a3acf5","#ff7a5c","#fff"];
+  const ps=Array.from({length:240},()=>({x:W*(.2+Math.random()*.6),y:H*.3,vx:(Math.random()-.5)*16,vy:-Math.random()*15-4,s:Math.random()*8+4,c:cols[Math.floor(Math.random()*5)],r:Math.random()*6}));
+  const t0=performance.now();
+  (function f(tt){x.clearRect(0,0,W,H);ps.forEach(p=>{p.vy+=.3;p.x+=p.vx;p.y+=p.vy;p.r+=.12;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);x.restore()});
+    if(tt-t0<3800)requestAnimationFrame(f);else x.clearRect(0,0,W,H)})(t0);
+}
+
+setScript(script);loadWho();loadMe();poll();requestAnimationFrame(frame);
+</script></body></html>
