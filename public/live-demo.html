@@ -118,9 +118,9 @@ const TXT={
  cyr:{round:"Раунд",prize:"Совға",left:"ўйинда қолди",winners:"ғолиб",chanceW:"ҳар бирига",cdL:"бошланишига",
   wait:"Таймер тугаши билан номлар ўча бошлайди",spin:"Кимнинг номи охиригача қолади?",last:"Охирги сониялар…",
   done:"Ғолиблар!",none:"Бу сафар ғолиб чиқмади",idle:"Демо панелидан раундни бошланг",close:"Ёпиш",unknown:"?"}};
-let script="lat";try{script=localStorage.getItem("ff-script")==="cyr"?"cyr":"lat"}catch(e){}
+let script="lat";try{script=JSON.parse(localStorage.getItem("ff-script")||'"lat"')==="cyr"?"cyr":"lat"}catch(e){}
 const t=k=>TXT[script][k];
-function setScript(s){script=s;try{localStorage.setItem("ff-script",s)}catch(e){}
+function setScript(s){script=s;try{localStorage.setItem("ff-script",JSON.stringify(s))}catch(e){}
   $("sc-cyr").setAttribute("aria-pressed",String(s==="cyr"));$("sc-lat").setAttribute("aria-pressed",String(s==="lat"));
   document.documentElement.lang=s==="lat"?"uz-Latn":"uz-Cyrl";paintStatic();paintWin()}
 $("sc-cyr").onclick=()=>setScript("cyr");$("sc-lat").onclick=()=>setScript("lat");

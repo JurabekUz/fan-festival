@@ -103,7 +103,7 @@ async stats(){
   const s=await api("/stats"),box=$("t-stats");
   const mx=Math.max(1,...Object.values(s.by_zone));
   const dist=s.stamp_distribution,dm=Math.max(1,...Object.values(dist));
-  const hrs=[];for(let h=9;h<=18;h++)hrs.push(String(h).padStart(2,"0"));
+  const hrs=[];for(let h=10;h<=18;h++)hrs.push(String(h).padStart(2,"0"));
   const hm=Math.max(1,...hrs.map(h=>(s.hourly_checkins[h]||0)));
   box.innerHTML=`<div class="grid">
    <div class="card stat"><b>${s.total_users}</b><span>Ro'yxatdan o'tganlar</span></div>
@@ -143,20 +143,21 @@ async users(){
 async types(){
   const box=$("t-types");await loadVTypes();
   box.innerHTML=`<div class="card"><h3 style="margin-top:0">Tashrif buyuruvchi turlari</h3>
-   <p class="muted" style="margin:0 0 12px">Ro'yxatdan o'tishda faqat <b>faol</b> turlar ko'rsatiladi (tanlash majburiy). Nom kirill yozuvida kiritilsin — saytda lotinga avtomatik o'giriladi. Ishtirokchisi bor turni o'chirib bo'lmaydi, uni nofaol qiling.</p>
-   <div class="row" style="margin-bottom:14px"><label>Yangi tur<input id="vt-new" maxlength="80" placeholder="масалан: Журналист" style="min-width:260px"></label><button class="btn p" id="vt-add">+ Qo'shish</button><span id="vt-msg"></span></div>
-   <div class="tw"><table><thead><tr><th style="width:80px">Tartib</th><th>Nomi</th><th>Ishtirokchilar</th><th>Holat</th><th></th></tr></thead><tbody>
+   <p class="muted" style="margin:0 0 12px">Ro'yxatdan o'tishda faqat <b>faol</b> turlar ko'rsatiladi (tanlash majburiy). Nom kirill yozuvida kiritilsin — saytda lotinga avtomatik o'giriladi. «Ruscha nomi» sayt rus tilida ochilganda ko'rsatiladi (bo'sh bo'lsa o'zbekcha nomi chiqadi). Ishtirokchisi bor turni o'chirib bo'lmaydi, uni nofaol qiling.</p>
+   <div class="row" style="margin-bottom:14px"><label>Yangi tur<input id="vt-new" maxlength="80" placeholder="масалан: Журналист" style="min-width:220px"></label><label>Ruscha nomi (ixtiyoriy)<input id="vt-new-ru" maxlength="80" placeholder="например: Журналист" style="min-width:200px"></label><button class="btn p" id="vt-add">+ Qo'shish</button><span id="vt-msg"></span></div>
+   <div class="tw"><table><thead><tr><th style="width:80px">Tartib</th><th>Nomi</th><th>Ruscha nomi</th><th>Ishtirokchilar</th><th>Holat</th><th></th></tr></thead><tbody>
    ${vtypes.map((t,i)=>`<tr data-vt="${t.id}"><td><button class="btn" data-mv="-1" ${i?"":"disabled"} title="Yuqoriga">↑</button> <button class="btn" data-mv="1" ${i<vtypes.length-1?"":"disabled"} title="Pastga">↓</button></td>
-     <td><input value="${esc(t.name)}" maxlength="80" data-nm style="min-width:220px;width:100%"></td><td>${t.users}</td>
+     <td><input value="${esc(t.name)}" maxlength="80" data-nm style="min-width:200px;width:100%"></td><td><input value="${esc(t.name_ru)}" maxlength="80" data-ru placeholder="—" style="min-width:160px;width:100%"></td><td>${t.users}</td>
      <td><label class="c"><input type="checkbox" data-ac ${t.active?"checked":""}> ${t.active?"faol":'<span class="muted">nofaol</span>'}</label></td>
-     <td>${t.users?"":`<button class="btn d" data-del>O'chirish</button>`}</td></tr>`).join("")||'<tr><td colspan="5" class="muted">Hali tur yo\'q</td></tr>'}</tbody></table></div></div>`;
+     <td>${t.users?"":`<button class="btn d" data-del>O'chirish</button>`}</td></tr>`).join("")||'<tr><td colspan="6" class="muted">Hali tur yo\'q</td></tr>'}</tbody></table></div></div>`;
   const fail=e=>warn("Bajarib bo'lmadi",esc(e.message));
   $("vt-add").onclick=async()=>{const n=$("vt-new").value.trim();if(!n)return warn("Nom bo'sh","Yangi tur nomini yozing.");
-    try{await api("/visitor-types",{name:n});load.types()}catch(e){fail(e)}};
+    try{await api("/visitor-types",{name:n,name_ru:$("vt-new-ru").value.trim()});load.types()}catch(e){fail(e)}};
   $("vt-new").onkeydown=e=>{if(e.key==="Enter")$("vt-add").click()};
   box.querySelectorAll("tr[data-vt]").forEach((tr,i)=>{const id=+tr.dataset.vt,t=vtypes[i];
     const patch=b=>api("/visitor-types/"+id,b,"PATCH").then(load.types).catch(e=>{fail(e);load.types()});
     tr.querySelector("[data-nm]").onchange=e=>{const v=e.target.value.trim();if(v&&v!==t.name)patch({name:v});else e.target.value=t.name};
+    tr.querySelector("[data-ru]").onchange=e=>{const v=e.target.value.trim();if(v!==t.name_ru)patch({name_ru:v})};
     tr.querySelector("[data-ac]").onchange=e=>patch({active:e.target.checked});
     tr.querySelectorAll("[data-mv]").forEach(b=>b.onclick=async()=>{  // qo'shni bilan joy almashtirish
       const o=vtypes[i+ +b.dataset.mv];if(!o)return;

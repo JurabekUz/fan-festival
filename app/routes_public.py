@@ -154,7 +154,7 @@ def me(ff_session: str | None = Cookie(default=None)):
 def visitor_types():
     with db.tx() as con:
         return {"types": [dict(r) for r in con.execute(
-            "SELECT id,name FROM visitor_types WHERE active=1 ORDER BY sort,id")]}
+            "SELECT id,name,name_ru FROM visitor_types WHERE active=1 ORDER BY sort,id")]}
 
 
 @router.post("/checkin")

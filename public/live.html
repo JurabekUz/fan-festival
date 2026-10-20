@@ -27,6 +27,8 @@ header{display:grid;grid-template-columns:auto 1fr auto;gap:10px 20px;align-item
 .tools button{border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--fg);padding:7px 12px;border-radius:10px;font:inherit;font-size:14px;cursor:pointer}
 .tools button[aria-pressed=true]{background:var(--amber);color:#0c1230;border-color:var(--amber);font-weight:600}
 @media (max-width:640px){header{grid-template-columns:1fr auto}.title{grid-column:1/-1;grid-row:2}}
+@media (max-width:640px){.tools{gap:5px}.tools button{padding:6px 9px;font-size:13px}
+  .back{min-width:0;max-width:100%;padding:6px 10px;font-size:13px}#back-t{overflow:hidden;text-overflow:ellipsis}}
 .live{display:inline-flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:13px;letter-spacing:.12em;color:var(--muted)}
 .live i{width:10px;height:10px;border-radius:50%;background:var(--coral);animation:pulse 1.4s infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,122,92,.7)}70%{box-shadow:0 0 0 12px rgba(255,122,92,0)}100%{box-shadow:0 0 0 0 rgba(255,122,92,0)}}
@@ -90,7 +92,7 @@ body.cd .tile{animation:breathe 2.4s ease-in-out infinite;animation-delay:calc(v
 <header>
   <div class="lefthead"><a class="back" id="back" href="/"><span aria-hidden="true">←</span> <span id="back-t"></span></a><a class="brand" href="/">FORMULA–2026</a></div>
   <div class="title"><span class="rnd" id="rnd"></span><span class="prize" id="prize"></span></div>
-  <div class="tools"><span class="live" id="live" hidden><i></i><span id="live-t"></span></span><button id="sc-cyr" type="button" aria-pressed="true">Кирил</button><button id="sc-lat" type="button" aria-pressed="false">Lotin</button><button id="fs" type="button" title="Full screen">⛶</button></div>
+  <div class="tools"><span class="live" id="live" hidden><i></i><span id="live-t"></span></span><button id="sc-cyr" type="button" aria-pressed="true">Кирил</button><button id="sc-lat" type="button" aria-pressed="false">Lotin</button><button id="sc-ru" type="button" aria-pressed="false" lang="ru">Рус</button><button id="fs" type="button" title="Full screen">⛶</button></div>
 </header>
 <div id="stage" hidden>
   <div class="status">
@@ -120,15 +122,21 @@ const TXT={
   wait:"Taymer tugashi bilan nomlar o'cha boshlaydi",paused:"Tanaffus — tez orada davom etadi",spin:"Kimning nomi oxirigacha qoladi?",last:"Oxirgi soniyalar…",
   done:"G'oliblar!",none:"Bu safar g'olib chiqmadi",close:"Yopish",live:"JONLI",idleH:"Keyingi raund tez orada",
   idleP:"Shu sahifani ochiq qoldiring — raund boshlanganda hamma nomlar shu yerda paydo bo'ladi.",recent:"So'nggi g'oliblar",
-  backHome:"Bosh sahifa",backMod:"Moderator paneli",you:"SIZ",meIn:"Siz o'yindasiz — omad!",meOut:"Afsus, bu safar omad kulib boqmadi",meWon:"🎉 Tabriklaymiz, siz yutdingiz!",offline:"Aloqa yo'q — qayta ulanmoqda…",error:"Raund boshlanmadi"}};
-let script="cyr";try{script=localStorage.getItem("ff-script")==="lat"?"lat":"cyr"}catch(e){}
+  backHome:"Bosh sahifa",backMod:"Moderator paneli",you:"SIZ",meIn:"Siz o'yindasiz — omad!",meOut:"Afsus, bu safar omad kulib boqmadi",meWon:"🎉 Tabriklaymiz, siz yutdingiz!",offline:"Aloqa yo'q — qayta ulanmoqda…",error:"Raund boshlanmadi"},
+ ru:{round:"Раунд",prize:"Приз",left:"осталось в игре",winners:"победит.",chanceW:"шанс каждому",cdL:"до начала",
+  wait:"Когда таймер закончится, имена начнут исчезать",paused:"Пауза — скоро продолжим",spin:"Чьё имя останется до конца?",last:"Последние секунды…",
+  done:"Победители!",none:"В этот раз победителей нет",close:"Закрыть",live:"LIVE",idleH:"Следующий раунд скоро",
+  idleP:"Не закрывайте эту страницу — когда раунд начнётся, все имена появятся здесь.",recent:"Последние победители",
+  backHome:"Главная",backMod:"Панель модератора",you:"ВЫ",meIn:"Вы в игре — удачи!",meOut:"Увы, в этот раз не повезло",meWon:"🎉 Поздравляем, вы выиграли!",offline:"Нет связи — переподключаемся…",error:"Раунд не начался"}};
+/* bosh sahifa bilan umumiy: qiymat JSON ko'rinishida ("\"lat\"") saqlanadi */
+let script="cyr";try{const v=JSON.parse(localStorage.getItem("ff-script")||'"cyr"');if(v in TXT)script=v}catch(e){}
 const t=k=>TXT[script][k];
-function setScript(s){script=s;try{localStorage.setItem("ff-script",s)}catch(e){}
-  $("sc-cyr").setAttribute("aria-pressed",String(s==="cyr"));$("sc-lat").setAttribute("aria-pressed",String(s==="lat"));
-  document.documentElement.lang=s==="lat"?"uz-Latn":"uz-Cyrl";document.title="FORMULA–2026 · "+(s==="lat"?"Jonli tanlov":"Жонли танлов");
+function setScript(s){script=s;try{localStorage.setItem("ff-script",JSON.stringify(s))}catch(e){}
+  for(const k of ["cyr","lat","ru"])$("sc-"+k).setAttribute("aria-pressed",String(s===k));
+  document.documentElement.lang={cyr:"uz-Cyrl",lat:"uz-Latn",ru:"ru"}[s];document.title="FORMULA–2026 · "+{cyr:"Жонли танлов",lat:"Jonli tanlov",ru:"Розыгрыш в прямом эфире"}[s];
   $("back-t").textContent=isMod?t("backMod"):t("backHome");
   tiles.forEach(x=>x.dataset.me=t("you"));paint();paintRecent();if(!$("winbox").hidden)paintWin()}
-$("sc-cyr").onclick=()=>setScript("cyr");$("sc-lat").onclick=()=>setScript("lat");
+for(const k of ["cyr","lat","ru"])$("sc-"+k).onclick=()=>setScript(k);
 $("fs").onclick=()=>{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen?.()};
 
 /* ---------- server bilan aloqa ---------- */

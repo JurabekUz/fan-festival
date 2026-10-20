@@ -6,6 +6,7 @@
 <link rel="preload" href="/fonts/unbounded-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/unbounded-cyrillic-ext.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/fonts/fonts.css">
+<script src="/ru.js?v=1"></script>
 <style>
 /* Layout: night-sky cover with countdown → day clock → nine pavilion lab cards (code check-in) → garden map → program → passport → prize draw. Dark-first. */
 :root{
@@ -73,6 +74,7 @@ select.input option{color:var(--fg);background:var(--surface)}
 .nav a:hover{color:var(--hero-fg);background:rgba(255,255,255,.07)}
 .script{display:flex;border:1px solid rgba(170,182,255,.28);border-radius:999px;padding:3px;flex:none}
 .script button{border:0;background:none;color:var(--hero-muted);font-size:13px;font-weight:600;padding:5px 11px;border-radius:999px}
+@media (max-width:400px){.script button{padding:5px 8px;font-size:12.5px}}
 .script button[aria-pressed="true"]{background:var(--amber);color:#0c1230}
 @media (max-width:980px){.nav{display:none}.script{margin-left:auto}}
 @media (max-width:520px){.brand span{display:none}}
@@ -85,6 +87,7 @@ select.input option{color:var(--fg);background:var(--surface)}
 .hero .eyebrow{color:var(--hero-muted)}
 .formula{display:inline-flex;align-self:flex-start;align-items:center;gap:10px;font-family:var(--f-display);font-weight:700;font-size:clamp(18px,2.6vw,28px);letter-spacing:.06em;padding:8px 16px;border:2px solid var(--amber);border-radius:12px;color:var(--amber)}
 .title{font-family:var(--f-display);font-weight:900;font-size:clamp(52px,9.5vw,120px);line-height:.9;letter-spacing:-.02em}
+html[lang="ru"] .title{font-size:clamp(34px,10.2vw,120px)}  /* «ФЕСТИВАЛЬ» o'zbekchadan uzun */
 .title .l2{display:block;color:var(--teal);font-size:.5em;letter-spacing:0;margin-top:.12em}
 .lead{font-size:clamp(17px,2vw,19px);color:var(--hero-muted);max-width:46ch}
 .facts{display:flex;flex-wrap:wrap;gap:10px}
@@ -134,6 +137,31 @@ section.tight{padding-top:0}
 .stepper button{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface-2);display:grid;place-items:center}
 .stepper button:hover{border-color:var(--amber)}
 @media (max-width:640px){.detail{grid-template-columns:1fr}.stepper{order:-1}}
+/* mobil: vertikal kun tartibi */
+.only-narrow{display:none}
+.agenda{display:none;list-style:none;margin:0;padding:0}
+.ag-ph{display:flex;align-items:center;gap:8px;margin:18px 0 8px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink)}
+.ag-ph:first-child{margin-top:0}
+.ag-ph i{width:10px;height:10px;border-radius:3px;background:var(--c);flex:none}
+.ag-ph span{margin-left:auto;font-family:var(--f-mono);font-weight:500;color:var(--faint);letter-spacing:0}
+.ag-it{position:relative;margin-left:4px;padding-left:20px;border-left:2px solid var(--line)}
+.ag-it::before{content:"";position:absolute;left:-7px;top:19px;width:12px;height:12px;border-radius:50%;background:var(--surface);box-shadow:inset 0 0 0 2px var(--c)}
+.ag-it.on::before{background:var(--c)}
+.ag-btn{width:100%;display:flex;gap:12px;align-items:baseline;text-align:left;border:0;background:none;padding:12px 0;color:var(--fg);font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.ag-btn .tm{flex:none;width:94px;font-family:var(--f-mono);font-size:13px;font-weight:700;color:var(--ink)}
+.ag-btn .ttl{flex:1;font-weight:600;font-size:15.5px;line-height:1.35}
+.ag-btn .chev{flex:none;width:10px;height:10px;border-right:2px solid var(--faint);border-bottom:2px solid var(--faint);transform:rotate(45deg) translateY(-3px);transition:transform .2s}
+.ag-it.on .chev{transform:rotate(225deg) translate(-2px,-2px)}
+.ag-d{display:none;margin:-4px 0 12px 106px;color:var(--muted);font-size:14.5px;line-height:1.5}
+.ag-it.on .ag-d{display:block}
+.ag-now{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:99px;background:var(--coral);color:#fff;font-size:11px;font-weight:700;vertical-align:2px}
+@media (max-width:640px){
+  .clock{padding:16px}
+  .clock .track-scroll,.clock .detail{display:none}
+  .agenda{display:block}
+  .only-wide{display:none}.only-narrow{display:inline}
+}
+@media (max-width:380px){.ag-btn .tm{width:84px;font-size:12px}.ag-d{margin-left:0}}
 
 /* ---------- pavilions ---------- */
 .filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
@@ -347,6 +375,7 @@ footer li b{color:var(--hero-fg);font-weight:600}
     <div class="script" role="group" aria-label="Ёзув">
       <button type="button" id="sc-cyr" aria-pressed="true" data-notr>Кирил</button>
       <button type="button" id="sc-lat" aria-pressed="false" data-notr>Lotin</button>
+      <button type="button" id="sc-ru" aria-pressed="false" data-notr lang="ru">Рус</button>
     </div>
   </div>
   <a class="winstrip" id="winstrip" href="#pasport" hidden><span class="wi" aria-hidden="true">🎉</span><span id="ws-t"></span></a>
@@ -364,7 +393,7 @@ footer li b{color:var(--hero-fg);font-weight:600}
         <div class="facts">
           <span class="fact hl"><svg width="18" height="18"><use href="#i-cal"/></svg>2026-йил 21-октябр</span>
           <a class="fact" href="#xarita"><svg width="18" height="18"><use href="#i-pin"/></svg>Тошкент ботаника боғи</a>
-          <span class="fact mono"><svg width="18" height="18"><use href="#i-clock"/></svg>09:00–18:00</span>
+          <span class="fact mono"><svg width="18" height="18"><use href="#i-clock"/></svg>10:00–18:00</span>
         </div>
         <div class="countdown" id="countdown" aria-live="polite"></div>
       </div>
@@ -377,15 +406,16 @@ footer li b{color:var(--hero-fg);font-weight:600}
     <div class="wrap">
       <div class="head">
         <div>
-          <div class="eyebrow">Кун тартиби · 09:00 → 18:00</div>
+          <div class="eyebrow">Кун тартиби · 10:00 → 18:00</div>
           <h2>Фестивал куни соатма-соат</h2>
         </div>
-        <p>Шкаладаги бўлакни босинг ёки стрелкалар билан юринг: ҳар бир тадбир ҳақида маълумот пастда очилади.</p>
+        <p><span class="only-wide">Шкаладаги бўлакни босинг ёки стрелкалар билан юринг: ҳар бир тадбир ҳақида маълумот пастда очилади.</span><span class="only-narrow">Тадбир устига босинг — у ҳақида батафсил маълумот очилади.</span></p>
       </div>
       <div class="clock">
         <div class="track-scroll">
           <div class="track" id="track" role="tablist" aria-label="Кун тартиби шкаласи"></div>
         </div>
+        <ul class="agenda" id="agenda" aria-label="Кун тартиби"></ul>
         <div class="detail" id="detail" aria-live="polite">
           <div class="time" id="d-time"></div>
           <div><h3 id="d-title"></h3><p id="d-text"></p></div>
@@ -402,7 +432,7 @@ footer li b{color:var(--hero-fg);font-weight:600}
     <div class="wrap">
       <div class="head">
         <div>
-          <div class="eyebrow">10:00–17:00 · интерактив майдонлар</div>
+          <div class="eyebrow">11:40–17:00 · интерактив майдонлар</div>
           <h2>Асосий илмий-маърифий майдонлар</h2>
         </div>
         <p>Тўққиз майдон бир вақтда ишлайди. Ҳар бир майдонда тўрт рақамли код берилади: уни киритсангиз, ташрифингиз паспортда қайд этилади.</p>
@@ -450,7 +480,7 @@ footer li b{color:var(--hero-fg);font-weight:600}
     <div class="wrap">
       <div class="head">
         <div>
-          <div class="eyebrow">Дастур · 09:00–18:00</div>
+          <div class="eyebrow">Дастур · 10:00–18:00</div>
           <h2>Батафсил дастур</h2>
         </div>
       </div>
@@ -549,7 +579,7 @@ footer li b{color:var(--hero-fg);font-weight:600}
     <ul>
       <li><svg width="18" height="18"><use href="#i-cal"/></svg><b>2026-йил 21-октябр</b></li>
       <li><svg width="18" height="18"><use href="#i-pin"/></svg><b>Тошкент ботаника боғи</b></li>
-      <li><svg width="18" height="18"><use href="#i-clock"/></svg><b class="mono">09:00–18:00</b></li>
+      <li><svg width="18" height="18"><use href="#i-clock"/></svg><b class="mono">10:00–18:00</b></li>
     </ul>
   </div>
 </footer>
@@ -558,14 +588,14 @@ footer li b{color:var(--hero-fg);font-weight:600}
 (()=>{
 /* ---------- data ---------- */
 const PH=[
- {id:1,t:"09:00–10:00",n:"Кутиб олиш ва очилиш",cls:"p1",col:"var(--amber)",ink:"var(--amber-ink)",ic:"i-mega"},
- {id:2,t:"10:00–17:00",n:"Интерактив майдонлар",cls:"p2",col:"var(--teal)",ink:"var(--teal-ink)",ic:"i-flaskf"},
+ {id:1,t:"10:00–11:30",n:"Кутиб олиш ва очилиш",cls:"p1",col:"var(--amber)",ink:"var(--amber-ink)",ic:"i-mega"},
+ {id:2,t:"11:40–17:00",n:"Интерактив майдонлар",cls:"p2",col:"var(--teal)",ink:"var(--teal-ink)",ic:"i-flaskf"},
  {id:3,t:"17:00–18:00",n:"Якунлаш ва тақдирлаш",cls:"p3",col:"var(--lav)",ink:"var(--lav-ink)",ic:"i-cup"}
 ];
 const EV=[
- {p:1,s:"09:00",e:"09:30",h:"Иштирокчиларни кутиб олиш",d:"Меҳмонларни кутиб олиш, рўйхатга олиш, фестивал дастури бўйича маълумот бериш ва ташриф буюрувчиларни майдонларга йўналтириш."},
- {p:1,s:"09:30",e:"10:00",h:"Фестивалнинг тантанали очилиш маросими",d:"Расмий табрик сўзлари, фестивалнинг мақсад ва вазифаларини тақдим этиш, иштирокчи илмий муассасаларни таништириш."},
- {p:2,s:"10:00",e:"13:00",h:"Интерактив майдонлар",d:"Кимё, астрономия, математика, ботаника, антропология, иммунология, лазер ва плазма технологиялари ҳамда бошқа йўналишларда тажрибалар, мастер-класслар, викториналар, квестлар ва кўргазмалар."},
+ {p:1,s:"10:00",e:"11:00",h:"Иштирокчиларни кутиб олиш",d:"Меҳмонларни кутиб олиш, рўйхатга олиш, фестивал дастури бўйича маълумот бериш ва ташриф буюрувчиларни майдонларга йўналтириш."},
+ {p:1,s:"11:00",e:"11:30",h:"Фестивалнинг тантанали очилиш маросими",d:"Расмий табрик сўзлари, фестивалнинг мақсад ва вазифаларини тақдим этиш, иштирокчи илмий муассасаларни таништириш."},
+ {p:2,s:"11:40",e:"13:00",h:"Интерактив майдонлар",d:"Кимё, астрономия, математика, ботаника, антропология, иммунология, лазер ва плазма технологиялари ҳамда бошқа йўналишларда тажрибалар, мастер-класслар, викториналар, квестлар ва кўргазмалар."},
  {p:2,s:"13:00",e:"14:00",h:"Тушлик",d:"Ташриф буюрувчилар, илмий ходимлар, волонтёрлар ва ташкилий гуруҳ учун танаффус."},
  {p:2,s:"14:00",e:"17:00",h:"Интерактив майдонлар",d:"Майдонлар фаолиятини давом эттириш; янги гуруҳларни қабул қилиш; илмий тажрибалар, интерактив ўйинлар, квестлар, викториналар ва амалий машғулотлар."},
  {p:3,s:"17:00",e:"17:30",h:"Якуний викториналар ва интерактив танловлар",d:"Викторина, квест ва амалий топшириқларни якунлаш; паспорти тўлган иштирокчиларни рўйхатга олишни якунлаш."},
@@ -605,7 +635,7 @@ const ZONES=[
  {n:12,t:"Доривор ўсимликлар коллекцияси",p:[[650,1095]]}
 ];
 const SERVICES=["Велосипед ижараси","Савдо шохобчаси","Кўл","Амфитеатр","Иссиқхона","Хўжалик майдони","Лаборатория","Маъмурият"];
-const START=Date.parse("2026-10-21T09:00:00+05:00"),END=Date.parse("2026-10-21T18:00:00+05:00");
+const START=Date.parse("2026-10-21T10:00:00+05:00"),END=Date.parse("2026-10-21T18:00:00+05:00");
 
 const catOf=k=>CATS.find(c=>c.k===k);
 const $=id=>document.getElementById(id);
@@ -635,19 +665,19 @@ function tr(s){
   }
   return o;
 }
-let latin=store.get("ff-script","cyr")==="lat";
-const T=s=>latin?tr(s):s;
+/* ff-script: "cyr" | "lat" | "ru" (/live bilan umumiy) */
+let lang=["cyr","lat","ru"].includes(store.get("ff-script","cyr"))?store.get("ff-script","cyr"):"cyr";
+const T=s=>lang==="lat"?tr(s):lang==="ru"&&window.ruText?ruText(s):s;
 const ORIG=new WeakMap();
 const TITLE=document.title;
 function applyScript(root=document.body){
   const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>{const p=n.parentElement;if(!p||p.closest("script,style,[data-notr]"))return NodeFilter.FILTER_REJECT;return /[Ѐ-ӿ]/.test(ORIG.get(n)??n.nodeValue)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT}});
-  let n;while((n=w.nextNode())){if(!ORIG.has(n))ORIG.set(n,n.nodeValue);const o=ORIG.get(n);n.nodeValue=latin?tr(o):o}
+  let n;while((n=w.nextNode())){if(!ORIG.has(n))ORIG.set(n,n.nodeValue);n.nodeValue=T(ORIG.get(n))}
   root.querySelectorAll("[aria-label]:not([data-notr]),[placeholder],img[alt]").forEach(e=>{for(const a of ["aria-label","placeholder","alt"]){if(!e.hasAttribute(a))continue;const k="o"+a.replace("-","");if(!(k in e.dataset))e.dataset[k]=e.getAttribute(a);e.setAttribute(a,T(e.dataset[k]))}});
-  if(root===document.body){document.title=T(TITLE);document.documentElement.lang=latin?"uz-Latn":"uz-Cyrl";
-    $("sc-cyr").setAttribute("aria-pressed",String(!latin));$("sc-lat").setAttribute("aria-pressed",String(latin));}
+  if(root===document.body){document.title=T(TITLE);document.documentElement.lang={cyr:"uz-Cyrl",lat:"uz-Latn",ru:"ru"}[lang];
+    for(const k of ["cyr","lat","ru"])$("sc-"+k).setAttribute("aria-pressed",String(lang===k));}
 }
-$("sc-cyr").onclick=()=>{latin=false;store.set("ff-script","cyr");applyScript()};
-$("sc-lat").onclick=()=>{latin=true;store.set("ff-script","lat");applyScript()};
+for(const k of ["cyr","lat","ru"])$("sc-"+k).onclick=()=>{lang=k;store.set("ff-script",k);applyScript()};
 
 /* ---------- countdown ---------- */
 function tick(){
@@ -663,15 +693,29 @@ tick();setInterval(tick,1000);
 
 /* ---------- day clock ---------- */
 const mins=t=>{const[a,b]=t.split(":").map(Number);return a*60+b};
-const T0=9*60,T1=18*60,pct=t=>((mins(t)-T0)/(T1-T0))*100;
+const T0=10*60,T1=18*60,pct=t=>((mins(t)-T0)/(T1-T0))*100;
 const track=$("track");let sel=Math.min(store.get("ff-ev2",1),EV.length-1);
 const hours=el("div",{class:"hours"});
-for(let h=9;h<=18;h++){const s=el("span");s.textContent=String(h).padStart(2,"0")+":00";s.style.left=((h*60-T0)/(T1-T0)*100)+"%";if(h===9)s.style.transform="none";if(h===18)s.style.transform="translateX(-100%)";hours.append(s)}
+for(let h=10;h<=18;h++){const s=el("span");s.textContent=String(h).padStart(2,"0")+":00";s.style.left=((h*60-T0)/(T1-T0)*100)+"%";if(h===10)s.style.transform="none";if(h===18)s.style.transform="translateX(-100%)";hours.append(s)}
 track.append(hours);
 PH.forEach(p=>{const ev=EV.filter(e=>e.p===p.id);const b=el("div",{class:"phase-band band"+p.id});b.style.left=pct(ev[0].s)+"%";b.style.width="calc("+(pct(ev.at(-1).e)-pct(ev[0].s))+"% - 4px)";b.textContent=p.n;track.append(b)});
 const segs=EV.map((e,i)=>{const b=el("button",{type:"button",role:"tab",class:"seg "+PH[e.p-1].cls,"aria-label":e.s+"–"+e.e+" "+e.h});b.style.left="calc("+pct(e.s)+"% + 2px)";b.style.width="calc("+(pct(e.e)-pct(e.s))+"% - 4px)";b.innerHTML='<span class="dot"></span><span>'+e.s+'</span>';b.onclick=()=>pick(i);track.append(b);return b});
 function pick(i){sel=(i+EV.length)%EV.length;store.set("ff-ev2",sel);const e=EV[sel];segs.forEach((s,j)=>{s.setAttribute("aria-selected",String(j===sel));s.tabIndex=j===sel?0:-1});
-  $("d-time").textContent=e.s+"–"+e.e;$("d-time").style.color=PH[e.p-1].ink;$("d-title").textContent=e.h;$("d-text").textContent=e.d;applyScript($("detail"))}
+  $("d-time").textContent=e.s+"–"+e.e;$("d-time").style.color=PH[e.p-1].ink;$("d-title").textContent=e.h;$("d-text").textContent=e.d;applyScript($("detail"));paintAgenda()}
+/* mobil ro'yxat: shkala bilan bir xil tanlov (sel) */
+const agItems=[];
+PH.forEach(p=>{const h=el("li",{class:"ag-ph"});h.style.setProperty("--c",p.col);h.style.setProperty("--ink",p.ink);
+  h.innerHTML='<i></i>'+p.n+'<span data-notr>'+p.t+'</span>';$("agenda").append(h);
+  EV.forEach((e,i)=>{if(e.p!==p.id)return;const li=el("li",{class:"ag-it"});li.style.setProperty("--c",p.col);li.style.setProperty("--ink",p.ink);
+    li.innerHTML='<button type="button" class="ag-btn" aria-expanded="false"><span class="tm" data-notr>'+e.s+'–'+e.e+'</span><span class="ttl"></span><span class="chev" aria-hidden="true"></span></button><p class="ag-d"></p>';
+    li.querySelector(".ttl").textContent=e.h;li.querySelector(".ag-d").textContent=e.d;
+    li.querySelector("button").onclick=()=>{if(li.classList.contains("on")){li.classList.remove("on");li.firstChild.setAttribute("aria-expanded","false")}else pick(i)};
+    agItems[i]=li;$("agenda").append(li)})});
+function paintAgenda(){agItems.forEach((li,j)=>{const on=j===sel;li.classList.toggle("on",on);li.firstChild.setAttribute("aria-expanded",String(on))})}
+function markNow(){const now=Date.now();if(now<START||now>=END)return;   // faqat festival kuni
+  const hm=new Date(now+5*3600e3).toISOString().slice(11,16);
+  agItems.forEach((li,j)=>{const e=EV[j],live=hm>=e.s&&hm<e.e,b=li.querySelector(".ag-now");
+    if(live&&!b){const x=el("span",{class:"ag-now"},"Ҳозир");li.querySelector(".ttl").append(x);applyScript(x)}else if(!live&&b)b.remove()})}
 $("prev").onclick=()=>pick(sel-1);$("next").onclick=()=>pick(sel+1);
 track.addEventListener("keydown",ev=>{if(ev.key==="ArrowRight"){pick(sel+1);segs[sel].focus()}if(ev.key==="ArrowLeft"){pick(sel-1);segs[sel].focus()}});
 
@@ -804,7 +848,7 @@ $("a-phone").addEventListener("input",e=>{const f=e.target,pos=f.selectionStart?
 /* tashrif buyuruvchi turlari — moderator /mod da boshqaradi */
 async function loadTypes(){const r=await api("/visitor-types");if(!r.ok)return;const s=$("a-type"),cur=s.value;
   s.querySelectorAll("option[value]:not([value=''])").forEach(o=>o.remove());
-  r.data.types.forEach(t=>{const o=el("option",{value:String(t.id)});o.textContent=t.name;s.append(o)});
+  r.data.types.forEach(t=>{if(t.name_ru&&window.RU)RU[t.name]=t.name_ru;const o=el("option",{value:String(t.id)});o.textContent=t.name;s.append(o)});
   s.value=r.data.types.some(t=>String(t.id)===cur)?cur:"";applyScript(s)}
 loadTypes();
 
@@ -854,10 +898,10 @@ let tab=store.get("ff-tab",2);
 const tabs=$("tabs");
 PH.forEach(p=>{const b=el("button",{type:"button",role:"tab",class:"tab"});b.style.setProperty("--pc",p.col);b.innerHTML=`<svg class="big" width="96" height="96"><use href="#${p.ic}"/></svg><span class="eyebrow">Босқич · ${p.id}</span><span class="t">${p.t}</span><span class="n"></span>`;b.querySelector(".n").textContent=p.n;b.onclick=()=>showTab(p.id);tabs.append(b)});
 function showTab(id){tab=id;store.set("ff-tab",id);[...tabs.children].forEach((b,i)=>b.setAttribute("aria-selected",String(i+1===id)));const p=PH[id-1];const ol=$("plist");ol.innerHTML="";ol.style.setProperty("--pci",p.ink);
-  EV.filter(e=>e.p===id).forEach(e=>{const li=el("li",{class:"pitem"});const d=mins(e.e)-mins(e.s);li.innerHTML=`<div class="time">${e.s}–${e.e}<span class="dur">${d>=60?(d/60)+" соат":d+" дақиқа"}</span></div><div><h3></h3><p></p></div>`;li.querySelector("h3").textContent=e.h;li.querySelector("p").textContent=e.d;ol.append(li)});
+  EV.filter(e=>e.p===id).forEach(e=>{const li=el("li",{class:"pitem"});const d=mins(e.e)-mins(e.s);li.innerHTML=`<div class="time">${e.s}–${e.e}<span class="dur">${[Math.floor(d/60)&&Math.floor(d/60)+" соат",d%60&&d%60+" дақиқа"].filter(Boolean).join(" ")}</span></div><div><h3></h3><p></p></div>`;li.querySelector("h3").textContent=e.h;li.querySelector("p").textContent=e.d;ol.append(li)});
   applyScript(ol);applyScript(tabs)}
 
-renderGrid();syncPassport();showTab(tab);pick(sel);applyScript();
+renderGrid();syncPassport();showTab(tab);pick(sel);markNow();setInterval(markNow,60000);applyScript();
 
 /* ---------- jonli o'yin banneri ---------- */
 let lvSt={status:"idle"},lvOff=0,lvTimer=null,lvPrevStatus=null;

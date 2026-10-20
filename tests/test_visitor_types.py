@@ -47,3 +47,12 @@ def test_null_type_stats_and_mod_edit(client, mod):
     assert mod.post("/api/mod/users/1/type", json={"visitor_type_id": 5}).status_code == 200
     assert mod.get("/api/mod/users/1").json()["user"]["visitor_type"] == "Мактаб ўқувчиси"
     assert "Мактаб ўқувчиси" in mod.get("/api/mod/export/users.csv").text
+
+
+def test_name_ru(client, mod):
+    t = {x["name"]: x for x in client.get("/api/visitor-types").json()["types"]}
+    assert t["Талаба"]["name_ru"] == "Студент"
+    tid = mod.post("/api/mod/visitor-types", json={"name": "Журналист", "name_ru": " Журналист  СМИ "}).json()["id"]
+    assert mod.patch(f"/api/mod/visitor-types/{tid}", json={"name_ru": "Журналист"}).status_code == 200
+    t = {x["id"]: x for x in client.get("/api/visitor-types").json()["types"]}
+    assert t[tid]["name_ru"] == "Журналист"

@@ -205,6 +205,7 @@ def set_user_type(uid: int, body: UserTypeIn, mod: str = Depends(auth.require_mo
 # ---------------- tashrif buyuruvchi turlari ----------------
 class VTypeIn(BaseModel):
     name: str | None = Field(None, max_length=80)
+    name_ru: str | None = Field(None, max_length=80)
     sort: int | None = None
     active: bool | None = None
 
@@ -220,7 +221,7 @@ def _vtype_name(v):
 def list_vtypes(mod: str = Depends(auth.require_mod)):
     with db.tx() as con:
         return {"types": [dict(r) for r in con.execute(
-            """SELECT t.id,t.name,t.sort,t.active,
+            """SELECT t.id,t.name,t.name_ru,t.sort,t.active,
                  (SELECT COUNT(*) FROM users u WHERE u.visitor_type_id=t.id) users
                FROM visitor_types t ORDER BY t.sort,t.id""")]}
 
@@ -232,8 +233,9 @@ def create_vtype(body: VTypeIn, mod: str = Depends(auth.require_mod)):
         sort = body.sort if body.sort is not None else con.execute(
             "SELECT COALESCE(MAX(sort),-1)+1 s FROM visitor_types").fetchone()["s"]
         try:
-            cur = con.execute("INSERT INTO visitor_types(name,sort,active,created_at) VALUES(?,?,?,?)",
-                              (name, sort, int(body.active is not False), db.now_iso()))
+            cur = con.execute("INSERT INTO visitor_types(name,name_ru,sort,active,created_at) VALUES(?,?,?,?,?)",
+                              (name, " ".join((body.name_ru or "").split()), sort, int(body.active is not False),
+                               db.now_iso()))
         except sqlite3.IntegrityError:
             raise HTTPException(409, "Bunday nomli tur bor")
         db.audit(con, mod, "vtype_create", {"id": cur.lastrowid, "name": name})
@@ -245,6 +247,8 @@ def update_vtype(tid: int, body: VTypeIn, mod: str = Depends(auth.require_mod)):
     sets, args = [], []
     if body.name is not None:
         sets.append("name=?"); args.append(_vtype_name(body.name))
+    if body.name_ru is not None:
+        sets.append("name_ru=?"); args.append(" ".join(body.name_ru.split()))
     if body.sort is not None:
         sets.append("sort=?"); args.append(body.sort)
     if body.active is not None:
