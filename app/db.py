@@ -16,6 +16,14 @@ CREATE TABLE IF NOT EXISTS users(
   pin_hash TEXT NOT NULL,
   passport_no TEXT UNIQUE,
   blocked INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  visitor_type_id INTEGER REFERENCES visitor_types(id)
+);
+CREATE TABLE IF NOT EXISTS visitor_types(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  sort INTEGER NOT NULL DEFAULT 0,
+  active INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS checkins(
@@ -73,6 +81,11 @@ CREATE INDEX IF NOT EXISTS idx_attempts ON attempts(key, ts);
 """
 
 
+# birinchi ishga tushishda; keyin moderator /mod da o'zgartiradi
+DEFAULT_VISITOR_TYPES = ["Академия ходими", "Олий таълим ўқитувчиси", "Талаба", "Мактаб ўқитувчиси",
+                         "Мактаб ўқувчиси", "Бошқа"]
+
+
 def now_ms() -> int:
     """Yagona soat (testlarda almashtiriladi)."""
     return int(time.time() * 1000)
@@ -117,6 +130,13 @@ def init():
         cols = {r["name"] for r in con.execute("PRAGMA table_info(draw_rounds)")}
         if "visible_at" not in cols:  # eski bazalar uchun
             con.execute("ALTER TABLE draw_rounds ADD COLUMN visible_at TEXT")
+        ucols = {r["name"] for r in con.execute("PRAGMA table_info(users)")}
+        if "visitor_type_id" not in ucols:  # eski bazalar uchun
+            con.execute("ALTER TABLE users ADD COLUMN visitor_type_id INTEGER REFERENCES visitor_types(id)")
+        if not con.execute("SELECT 1 FROM visitor_types LIMIT 1").fetchone():
+            now = now_iso()
+            con.executemany("INSERT INTO visitor_types(name,sort,created_at) VALUES(?,?,?)",
+                            [(n, i, now) for i, n in enumerate(DEFAULT_VISITOR_TYPES)])
         con.execute("INSERT OR IGNORE INTO live_state(id,state_json) VALUES(1,?)",
                     (json.dumps({"status": "idle"}),))
 

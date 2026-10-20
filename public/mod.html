@@ -52,13 +52,14 @@ tr.sel td{background:rgba(246,185,56,.14)}tr[data-uid]{cursor:pointer}tr[data-ui
 </div>
 <div id="app" hidden>
 <header><h1>FORMULA-2026 · Moderator <span class="muted" id="who"></span></h1>
-<nav id="nav"><button data-t="stats" aria-selected="true">Hisobot</button><button data-t="users">Ishtirokchilar</button><button data-t="draw">O'yin</button><button data-t="rounds">Raundlar</button><button data-t="audit">Jurnal</button>
+<nav id="nav"><button data-t="stats" aria-selected="true">Hisobot</button><button data-t="users">Ishtirokchilar</button><button data-t="draw">O'yin</button><button data-t="rounds">Raundlar</button><button data-t="types">Turlar</button><button data-t="audit">Jurnal</button>
 <a class="btn" href="/live" target="_blank">Jonli ekran ↗</a><button id="out">Chiqish</button></nav></header>
 <main>
 <section id="t-stats"></section>
 <section id="t-users" hidden></section>
 <section id="t-draw" hidden></section>
 <section id="t-rounds" hidden></section>
+<section id="t-types" hidden></section>
 <section id="t-audit" hidden></section>
 </main></div>
 <dialog id="dlg"></dialog>
@@ -91,7 +92,7 @@ $("l-go").onclick=async()=>{try{const d=await api("/login",{login:$("l-login").v
 $("l-pass").onkeydown=e=>{if(e.key==="Enter")$("l-go").click()};
 $("out").onclick=async()=>{await api("/logout",{});showLogin()};
 let tab="stats";
-$("nav").onclick=e=>{const b=e.target.closest("button[data-t]");if(!b)return;tab=b.dataset.t;[...$("nav").querySelectorAll("button[data-t]")].forEach(x=>x.setAttribute("aria-selected",String(x===b)));["stats","users","draw","rounds","audit"].forEach(t=>$("t-"+t).hidden=t!==tab);load[tab]()};
+$("nav").onclick=e=>{const b=e.target.closest("button[data-t]");if(!b)return;tab=b.dataset.t;[...$("nav").querySelectorAll("button[data-t]")].forEach(x=>x.setAttribute("aria-selected",String(x===b)));["stats","users","draw","rounds","types","audit"].forEach(t=>$("t-"+t).hidden=t!==tab);load[tab]()};
 function start(login){$("boot").hidden=true;$("login").hidden=true;$("app").hidden=false;$("who").textContent="· "+login;load[tab]()}
 
 /* ---------- Hisobot ---------- */
@@ -111,9 +112,10 @@ async stats(){
    <div class="card stat"><b>${s.distinct_winners}</b><span>Turli g'oliblar</span></div></div>
    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr))">
    <div class="card"><h3>Maydonlar bo'yicha muhrlar</h3>${Object.entries(s.by_zone).map(([z,c])=>`<div class="zone"><b>${z}</b><div class="t"><i style="width:${c/mx*100}%"></i></div><span>${c}</span></div><div class="muted" style="margin:-4px 0 4px 36px;font-size:12px">${ZN[z]}</div>`).join("")}</div>
-   <div><div class="card"><h3>Muhrlar soni bo'yicha</h3><div class="bw"><div class="bars">${Object.entries(dist).map(([k,v])=>`<div style="height:${v/dm*100}%"><i>${v}</i><em>${k}</em></div>`).join("")}</div></div></div>
+   <div><div class="card"><h3>Tashrif buyuruvchilar turi</h3>${(()=>{const tm=Math.max(1,...s.by_type.map(t=>t.c));return s.by_type.filter(t=>t.active||t.c).map(t=>`<div class="zone" style="grid-template-columns:minmax(0,190px) 1fr 50px"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" class="${t.id===null?"muted":""}">${esc(t.name)}</span><div class="t"><i style="width:${t.c/tm*100}%"></i></div><span>${t.c}</span></div>`).join("")})()}</div>
+   <div class="card"><h3>Muhrlar soni bo'yicha</h3><div class="bw"><div class="bars">${Object.entries(dist).map(([k,v])=>`<div style="height:${v/dm*100}%"><i>${v}</i><em>${k}</em></div>`).join("")}</div></div></div>
    <div class="card"><h3>Soatlik muhrlar (Toshkent vaqti)</h3><div class="bw"><div class="bars h">${hrs.map(h=>{const v=s.hourly_checkins[h]||0;return `<div style="height:${v/hm*100}%"><i>${v}</i><em>${h}</em></div>`}).join("")}</div></div></div></div></div>
-   <div class="card"><a class="btn" href="/api/mod/export/users.csv">⬇ Ishtirokchilar CSV</a> <a class="btn" href="/api/mod/export/rounds.csv">⬇ Raundlar CSV</a> <span class="muted">Sahifa har 15 soniyada yangilanadi</span></div>`;
+   <div class="card"><a class="btn" href="/api/mod/export/users.xlsx">⬇ Ishtirokchilar (Excel)</a> <a class="btn" href="/api/mod/export/rounds.xlsx">⬇ Raundlar (Excel)</a> <span class="muted">Sahifa har 15 soniyada yangilanadi</span></div>`;
   clearTimeout(statTimer);statTimer=setTimeout(()=>{if(tab==="stats"&&!$("app").hidden)load.stats().catch(()=>{})},15000)},
 
 /* ---------- Ishtirokchilar ---------- */
@@ -124,14 +126,43 @@ async users(){
    <label>Holat<select id="u-st"><option value="all">Hammasi</option><option value="eligible">O'yinga mos (9/9)</option><option value="incomplete">To'liq emas (&lt;9)</option></select></label>
    <label>O'yinda<select id="u-pl"><option value="all">Hammasi</option><option value="no">Hali o'ynamaganlar</option></select></label>
    <label>Yutganlar<select id="u-won"><option value="all">Hammasi</option><option value="yes">Yutganlar</option><option value="no">Yutmaganlar</option></select></label>
+   <label>Turi<select id="u-vt"><option value="all">Hammasi</option></select></label>
    <label>Saralash<select id="u-sort"><option value="new">Yangi</option><option value="stamps">Muhr</option><option value="plays">O'ynagan</option><option value="wins">Yutgan</option><option value="name">Ism</option></select></label>
    <span id="u-total" class="muted"></span></div>
    <div class="muted" style="margin:0 4px 8px;font-size:13px"><span class="fl g">●</span>9/9 — o'yinga mos &nbsp; <span class="fl y">●</span>5–8 muhr — yetmaydi &nbsp; <span class="fl r">●</span>0–4 muhr yoki bloklangan</div>
-   <div class="card tw"><table><thead><tr><th>Pasport</th><th>Ism</th><th>Telefon</th><th>Muhr</th><th>O'ynagan</th><th>Yutgan</th><th class="hm">Oxirgi yutuq</th></tr></thead><tbody id="u-body"></tbody></table></div>`;
-   let t;const go=()=>{clearTimeout(t);t=setTimeout(load.users,250)};$("u-q").oninput=go;["u-st","u-pl","u-won","u-sort"].forEach(i=>$(i).onchange=load.users)}
-  const qs=new URLSearchParams({q:$("u-q").value,status:$("u-st").value,played:$("u-pl").value,won:$("u-won").value,sort:$("u-sort").value,limit:300});
+   <div class="card tw"><table><thead><tr><th>Pasport</th><th>Ism</th><th>Telefon</th><th class="hm">Turi</th><th>Muhr</th><th>O'ynagan</th><th>Yutgan</th><th class="hm">Oxirgi yutuq</th></tr></thead><tbody id="u-body"></tbody></table></div>`;
+   let t;const go=()=>{clearTimeout(t);t=setTimeout(load.users,250)};$("u-q").oninput=go;["u-st","u-pl","u-won","u-sort","u-vt"].forEach(i=>$(i).onchange=load.users)}
+  await loadVTypes();const vs=$("u-vt"),vcur=vs.value;
+  vs.innerHTML='<option value="all">Hammasi</option>'+vtypes.map(t=>`<option value="${t.id}">${esc(t.name)}${t.active?"":" (nofaol)"}</option>`).join("")+'<option value="none">Belgilanmagan</option>';
+  vs.value=[...vs.options].some(o=>o.value===vcur)?vcur:"all";
+  const qs=new URLSearchParams({q:$("u-q").value,status:$("u-st").value,played:$("u-pl").value,won:$("u-won").value,sort:$("u-sort").value,vtype:$("u-vt").value,limit:300});
   const d=await api("/users?"+qs);$("u-total").textContent=d.total+" ta";
-  $("u-body").innerHTML=d.users.map(u=>`<tr data-id="${u.id}" style="cursor:pointer"><td>${esc(u.passport_no)}</td><td>${esc(u.first_name)} ${esc(u.last_name)} ${u.blocked?'<span class="tag x">blok</span>':""}</td><td>${esc(u.phone)}</td><td class="c-${flagCls(u)}">${flag(u)}${u.stamps}/9</td><td>${u.plays}</td><td>${u.wins?`<span class="tag w">${u.wins}</span>`:0}</td><td class="hm">${tm(u.last_win)}</td></tr>`).join("")||'<tr><td colspan="7" class="muted">Hech narsa topilmadi</td></tr>'},
+  $("u-body").innerHTML=d.users.map(u=>`<tr data-id="${u.id}" style="cursor:pointer"><td>${esc(u.passport_no)}</td><td>${esc(u.first_name)} ${esc(u.last_name)} ${u.blocked?'<span class="tag x">blok</span>':""}</td><td>${esc(u.phone)}</td><td class="hm">${u.visitor_type?esc(u.visitor_type):'<span class="muted">—</span>'}</td><td class="c-${flagCls(u)}">${flag(u)}${u.stamps}/9</td><td>${u.plays}</td><td>${u.wins?`<span class="tag w">${u.wins}</span>`:0}</td><td class="hm">${tm(u.last_win)}</td></tr>`).join("")||'<tr><td colspan="8" class="muted">Hech narsa topilmadi</td></tr>'},
+
+/* ---------- Turlar ---------- */
+async types(){
+  const box=$("t-types");await loadVTypes();
+  box.innerHTML=`<div class="card"><h3 style="margin-top:0">Tashrif buyuruvchi turlari</h3>
+   <p class="muted" style="margin:0 0 12px">Ro'yxatdan o'tishda faqat <b>faol</b> turlar ko'rsatiladi (tanlash majburiy). Nom kirill yozuvida kiritilsin — saytda lotinga avtomatik o'giriladi. Ishtirokchisi bor turni o'chirib bo'lmaydi, uni nofaol qiling.</p>
+   <div class="row" style="margin-bottom:14px"><label>Yangi tur<input id="vt-new" maxlength="80" placeholder="масалан: Журналист" style="min-width:260px"></label><button class="btn p" id="vt-add">+ Qo'shish</button><span id="vt-msg"></span></div>
+   <div class="tw"><table><thead><tr><th style="width:80px">Tartib</th><th>Nomi</th><th>Ishtirokchilar</th><th>Holat</th><th></th></tr></thead><tbody>
+   ${vtypes.map((t,i)=>`<tr data-vt="${t.id}"><td><button class="btn" data-mv="-1" ${i?"":"disabled"} title="Yuqoriga">↑</button> <button class="btn" data-mv="1" ${i<vtypes.length-1?"":"disabled"} title="Pastga">↓</button></td>
+     <td><input value="${esc(t.name)}" maxlength="80" data-nm style="min-width:220px;width:100%"></td><td>${t.users}</td>
+     <td><label class="c"><input type="checkbox" data-ac ${t.active?"checked":""}> ${t.active?"faol":'<span class="muted">nofaol</span>'}</label></td>
+     <td>${t.users?"":`<button class="btn d" data-del>O'chirish</button>`}</td></tr>`).join("")||'<tr><td colspan="5" class="muted">Hali tur yo\'q</td></tr>'}</tbody></table></div></div>`;
+  const fail=e=>warn("Bajarib bo'lmadi",esc(e.message));
+  $("vt-add").onclick=async()=>{const n=$("vt-new").value.trim();if(!n)return warn("Nom bo'sh","Yangi tur nomini yozing.");
+    try{await api("/visitor-types",{name:n});load.types()}catch(e){fail(e)}};
+  $("vt-new").onkeydown=e=>{if(e.key==="Enter")$("vt-add").click()};
+  box.querySelectorAll("tr[data-vt]").forEach((tr,i)=>{const id=+tr.dataset.vt,t=vtypes[i];
+    const patch=b=>api("/visitor-types/"+id,b,"PATCH").then(load.types).catch(e=>{fail(e);load.types()});
+    tr.querySelector("[data-nm]").onchange=e=>{const v=e.target.value.trim();if(v&&v!==t.name)patch({name:v});else e.target.value=t.name};
+    tr.querySelector("[data-ac]").onchange=e=>patch({active:e.target.checked});
+    tr.querySelectorAll("[data-mv]").forEach(b=>b.onclick=async()=>{  // qo'shni bilan joy almashtirish
+      const o=vtypes[i+ +b.dataset.mv];if(!o)return;
+      try{await api("/visitor-types/"+id,{sort:o.sort===t.sort?o.sort+ +b.dataset.mv:o.sort},"PATCH");await api("/visitor-types/"+o.id,{sort:t.sort},"PATCH")}catch(e){fail(e)}load.types()});
+    const d=tr.querySelector("[data-del]");if(d)d.onclick=async()=>{if(!await ask("«"+t.name+"» o'chirilsinmi?","Bu turda ishtirokchi yo'q. Uni qayta tiklab bo'lmaydi.",{ok:"O'chirish",cancel:"Qaytish",kind:"danger"}))return;
+      try{await api("/visitor-types/"+id,undefined,"DELETE");load.types()}catch(e){fail(e)}}})},
 
 /* ---------- O'yin ---------- */
 async draw(){
@@ -270,15 +301,19 @@ async function updAuto(){try{const d=await api("/draw/next");autoNo=d.number}cat
 function paintAuto(){const el=$("d-auto");if(el)el.textContent="Keyingi: Raund #"+autoNo+" · "+hm(new Date().toISOString())}
 setInterval(()=>{if(tab==="draw")paintAuto()},15000);
 
+let vtypes=[];
+async function loadVTypes(){try{vtypes=(await api("/visitor-types")).types}catch(e){if(e.message==="401")throw e}}
+
 /* ---------- Ishtirokchi kartasi ---------- */
 const dlg=$("dlg");
 document.addEventListener("click",e=>{
   const o=e.target.closest("[data-id]");if(o)openUser(+o.dataset.id);
   const c=e.target.closest("button[data-cancel]");if(c)ask("Raund #"+c.dataset.cancel+" bekor qilinsinmi?","Raund tarixda qoladi, lekin hisoblardan chiqadi. Uning g'oliblari yana o'ynay oladigan bo'ladi.",{ok:"Bekor qilish",cancel:"Qaytish",kind:"danger"}).then(y=>{if(y)api("/draw/rounds/"+c.dataset.cancel,undefined,"DELETE").then(load.rounds).catch(x=>warn("Bajarib bo'lmadi",esc(x.message)))})});
 async function openUser(id){
-  const d=await api("/users/"+id),u=d.user,have=new Set(d.stamps.map(s=>s.zone_id));
+  const [d]=await Promise.all([api("/users/"+id),loadVTypes()]),u=d.user,have=new Set(d.stamps.map(s=>s.zone_id));
   dlg.innerHTML=`<div class="dh"><div><h3 style="margin:0">${esc(u.first_name)} ${esc(u.last_name)} <span class="muted">${esc(u.passport_no)}</span></h3>
   <div class="muted">${esc(u.phone)} · ro'yxatdan: ${tm(u.created_at)} ${u.blocked?'<span class="tag x">bloklangan</span>':""}</div></div><button class="btn" id="cl">✕ Yopish</button></div>
+  <div class="row" style="margin:14px 0 0"><label>Turi<select id="vt-sel"><option value="">— belgilanmagan —</option>${vtypes.filter(t=>t.active||t.id===u.visitor_type_id).map(t=>`<option value="${t.id}" ${t.id===u.visitor_type_id?"selected":""}>${esc(t.name)}</option>`).join("")}</select></label></div>
   <div class="row" style="margin:14px 0"><input id="np" maxlength="4" inputmode="numeric" placeholder="Yangi PIN (4 raqam)" style="width:170px"><button class="btn p" id="rp">PIN ni tiklash</button>
   <button class="btn ${u.blocked?"":"d"}" id="bl">${u.blocked?"Blokdan chiqarish":"Bloklash"}</button></div><div id="dm" style="min-height:1.4em"></div>
   <b>Muhrlar</b> <span class="muted">(bosib qo'lda qo'yish/olish)</span><div class="row" style="margin:8px 0">${[1,2,3,4,5,6,7,8,9].map(z=>`<button class="stampbtn ${have.has(z)?"on":""}" data-z="${z}" title="${ZN[z]}">${z}</button>`).join("")}</div>
@@ -286,6 +321,7 @@ async function openUser(id){
   <ul>${d.history.map(h=>`<li>Raund #${h.round_id} · ${hm(h.created_at)} · ${h.won?'<span class="tag w">yutdi</span>':"yutmadi"} ${esc(h.prize)} ${h.cancelled?'<span class="tag x">bekor</span>':""}</li>`).join("")||'<li class="muted">hali qatnashmagan</li>'}</ul>`;
   dlg.showModal();$("cl").onclick=()=>{dlg.close();if(tab==="users")load.users()};
   dlg.querySelectorAll(".stampbtn").forEach(b=>b.onclick=async()=>{const on=!b.classList.contains("on");await api(`/users/${id}/stamp`,{zone:+b.dataset.z,on});b.classList.toggle("on",on)});
+  $("vt-sel").onchange=async e=>{const v=e.target.value;try{await api(`/users/${id}/type`,{visitor_type_id:v?+v:null});$("dm").className="ok";$("dm").textContent="Turi saqlandi."}catch(x){$("dm").className="err";$("dm").textContent=x.message}};
   $("rp").onclick=async()=>{if(!/^\d{4}$/.test($("np").value.trim()))return warn("PIN noto'g'ri","Yangi PIN aynan 4 ta raqamdan iborat bo'lsin, masalan 4821.");try{await api(`/users/${id}/reset-pin`,{pin:$("np").value.trim()});$("dm").className="ok";$("dm").textContent="PIN yangilandi. Foydalanuvchiga ayting."}catch(e){$("dm").className="err";$("dm").textContent=e.message}};
   $("bl").onclick=async()=>{
     if(!u.blocked&&!await ask("Ishtirokchi bloklansinmi?",`<b>${esc(u.first_name)} ${esc(u.last_name)}</b> kira olmaydi va o'yinda qatnashmaydi. Keyin blokdan chiqarish mumkin.`,{ok:"Bloklash",cancel:"Qaytish",kind:"danger"}))return;

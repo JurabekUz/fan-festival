@@ -1,4 +1,5 @@
 import asyncio
+import fcntl
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -29,9 +30,24 @@ def check_config():
         log.warning("COOKIE_SECURE=false — faqat lokal sinov uchun, serverda true bo'lsin")
 
 
+def single_process_lock():
+    """Jonli o'yin holati xotirada — ikkinchi jarayon (--workers 2+) jim ishlab, ekranlarni
+    sakratib qo'ymasin: qulfni ololmasa ishga tushmaydi."""
+    path = Path(config.DB_PATH).with_suffix(".lock")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fh = open(path, "w")
+    try:
+        fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        fh.close()
+        raise RuntimeError("Ilova allaqachon boshqa jarayonda ishlayapti — faqat --workers 1 bilan ishga tushiring")
+    return fh
+
+
 @asynccontextmanager
 async def lifespan(app):
     check_config()
+    lock = single_process_lock()
     db.init()
     live.reset_cache()
     live.load()
@@ -47,6 +63,7 @@ async def lifespan(app):
     task = asyncio.create_task(ticker())
     yield
     task.cancel()
+    lock.close()
 
 
 app = FastAPI(title="FORMULA-2026", lifespan=lifespan, docs_url=None, redoc_url=None)
@@ -57,6 +74,8 @@ async def no_cache_html(request, call_next):
     resp = await call_next(request)
     if resp.headers.get("content-type", "").startswith("text/html") or request.url.path.startswith("/api"):
         resp.headers["Cache-Control"] = "no-cache"
+    elif request.url.path.startswith("/fonts/"):  # shriftlar o'zgarmaydi — qayta yuklanmasin
+        resp.headers["Cache-Control"] = "public, max-age=31536000"
     return resp
 
 

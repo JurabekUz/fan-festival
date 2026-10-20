@@ -16,7 +16,7 @@ def test_register_login_persist(client):
 
 def test_phone_unique_and_validation(client):
     register(client, 1, stamps=0)
-    r = client.post("/api/register", json={"first_name": "A", "last_name": "B", "phone": "+998 90 100 0001", "pin": "1234"})
+    r = client.post("/api/register", json={"first_name": "A", "last_name": "B", "phone": "+998 90 100 0001", "pin": "1234", "visitor_type_id": 1})
     assert r.status_code == 409
     assert client.post("/api/register", json={"first_name": "A", "last_name": "B", "phone": "123", "pin": "1234"}).status_code == 422
     assert client.post("/api/register", json={"first_name": "A", "last_name": "B", "phone": "901112233", "pin": "12a4"}).status_code == 422
@@ -94,7 +94,7 @@ def test_csv_formula_injection_escaped(client, mod):
     from app.main import app
     c = TestClient(app)
     assert c.post("/api/register", json={"first_name": "=HYPERLINK(1)", "last_name": "@x",
-                                         "phone": "901112233", "pin": "1234"}).status_code == 200
+                                         "phone": "901112233", "pin": "1234", "visitor_type_id": 1}).status_code == 200
     body = mod.get("/api/mod/export/users.csv").text
     assert "'=HYPERLINK(1)" in body and "'@x" in body
 
@@ -106,3 +106,19 @@ def test_config_check_rejects_missing_codes(monkeypatch):
     monkeypatch.setattr(config, "ZONE_CODES", {1: "1111"})
     with pytest.raises(RuntimeError):
         check_config()
+
+
+def test_xlsx_export_styled(client, mod):
+    import io
+    from openpyxl import load_workbook
+    from app.main import app
+    c = TestClient(app)
+    assert c.post("/api/register", json={"first_name": "=1+1", "last_name": "B", "phone": "901112233",
+                                         "pin": "1234", "visitor_type_id": 3}).status_code == 200
+    r = mod.get("/api/mod/export/users.xlsx")
+    assert r.status_code == 200 and "ishtirokchilar.xlsx" in r.headers["content-disposition"]
+    ws = load_workbook(io.BytesIO(r.content)).active
+    assert ws["A1"].value == "ID" and ws["A1"].font.bold and ws.freeze_panes == "A2" and ws.auto_filter.ref
+    assert ws["C2"].value == "=1+1" and ws["C2"].data_type == "s"   # formula emas, matn
+    assert ws["F2"].value == "Талаба"
+    assert mod.get("/api/mod/export/rounds.xlsx").status_code == 200

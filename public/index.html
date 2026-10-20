@@ -1,9 +1,11 @@
 <!doctype html><html lang="uz-Cyrl"><head><meta charset="utf-8">
 <title>FORMULA–2026 Фан фестивали</title>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="preload" href="/fonts/golos-text-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/golos-text-cyrillic-ext.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/unbounded-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/unbounded-cyrillic-ext.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/fonts.css">
 <style>
 /* Layout: night-sky cover with countdown → day clock → nine pavilion lab cards (code check-in) → garden map → program → passport → prize draw. Dark-first. */
 :root{
@@ -36,7 +38,7 @@
 [hidden]{display:none!important}
 html{scroll-behavior:smooth}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
-body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
 .wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.1}
 p{margin:0}
@@ -47,6 +49,12 @@ button{cursor:pointer}
 .eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .input{width:100%;min-width:0;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2);color:var(--fg)}
 .input:focus{outline:2px solid var(--amber);outline-offset:0}
+.phone-in{position:relative}
+.phone-in .cc{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-variant-numeric:tabular-nums;pointer-events:none}
+.phone-in .input{padding-left:58px;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+select.input{appearance:none;-webkit-appearance:none;padding-right:38px;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 20px) 50%,calc(100% - 14px) 50%;background-size:6px 6px;background-repeat:no-repeat}
+select.input:invalid{color:var(--faint)}
+select.input option{color:var(--fg);background:var(--surface)}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 18px;border-radius:999px;border:0;background:var(--amber);color:#0c1230;font-weight:700;white-space:nowrap}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .btn.ghost{background:none;border:1px solid var(--line);color:var(--fg);font-weight:600}
@@ -469,7 +477,10 @@ footer li b{color:var(--hero-fg);font-weight:600}
                 <input class="input" id="a-first" placeholder="Исм" maxlength="60" autocomplete="given-name">
                 <input class="input" id="a-last" placeholder="Фамилия" maxlength="60" autocomplete="family-name">
               </div>
-              <input class="input" id="a-phone" type="tel" inputmode="tel" placeholder="Телефон: 90 123 45 67" maxlength="20" autocomplete="tel">
+              <select class="input" id="a-type" aria-label="Ким сифатида ташриф буюрдингиз?" required>
+                <option value="" disabled selected>Ким сифатида ташриф буюрдингиз?</option>
+              </select>
+              <div class="phone-in"><span class="cc" data-notr>+998</span><input class="input" id="a-phone" type="tel" inputmode="numeric" placeholder="90 123 45 67" autocomplete="tel-national" aria-label="Телефон рақами"></div>
               <div class="row2">
                 <input class="input" id="a-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="4 хонали PIN" autocomplete="off">
                 <input class="input" id="a-pin2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="PIN ни такрорланг" autocomplete="off">
@@ -758,7 +769,7 @@ $("logout").onclick=async()=>{await api("/logout",{});me=null;visited=new Set();
 let authMode="reg";
 function setAuthMode(m){
   authMode=m;$("tab-reg").setAttribute("aria-selected",String(m==="reg"));$("tab-login").setAttribute("aria-selected",String(m==="login"));
-  $("row-names").hidden=m!=="reg";$("a-pin2").hidden=m!=="reg";$("a-pin").placeholder=m==="reg"?"4 хонали PIN":"PIN";
+  $("row-names").hidden=m!=="reg";$("a-type").hidden=m!=="reg";$("a-pin2").hidden=m!=="reg";$("a-pin").placeholder=m==="reg"?"4 хонали PIN":"PIN";
   $("a-submit").firstChild.textContent=m==="reg"?"Паспортни очиш":"Кириш";$("a-hint").hidden=m!=="reg";$("a-msg").textContent="";
   delete $("a-pin").dataset.oplaceholder;applyScript($("auth-area"));
 }
@@ -766,19 +777,36 @@ $("tab-reg").onclick=()=>setAuthMode("reg");$("tab-login").onclick=()=>setAuthMo
 $("auth-form").onsubmit=async e=>{e.preventDefault();
   const msg=$("a-msg"),btn=$("a-submit");
   const phone=$("a-phone").value.trim(),pin=$("a-pin").value.trim();
-  if(phone.replace(/\D/g,"").length<9){say(msg,"Телефон рақамини тўлиқ киритинг: 90 123 45 67","err");return}
+  if(phone.replace(/\D/g,"").length!==9){say(msg,"Телефон рақамини тўлиқ киритинг: 90 123 45 67","err");return}
   if(!/^\d{4}$/.test(pin)){say(msg,"PIN 4 та рақамдан иборат бўлсин.","err");return}
   let r;btn.disabled=true;
   if(authMode==="reg"){
     const fn=$("a-first").value.trim(),ln=$("a-last").value.trim();
     if(!fn||!ln){btn.disabled=false;say(msg,"Исм ва фамилиянгизни ёзинг.","err");return}
+    const vt=Number($("a-type").value);
+    if(!vt){btn.disabled=false;say(msg,"Ким сифатида ташриф буюрганингизни танланг.","err");return}
     if(pin!==$("a-pin2").value.trim()){btn.disabled=false;say(msg,"PIN лар бир хил эмас.","err");return}
-    r=await api("/register",{first_name:fn,last_name:ln,phone,pin});
+    r=await api("/register",{first_name:fn,last_name:ln,phone,pin,visitor_type_id:vt});
   }else r=await api("/login",{phone,pin});
   btn.disabled=false;
-  if(r.ok){e.target.reset();msg.textContent="";setMe(r.data)}else say(msg,errText(r),"err");
+  if(r.ok){e.target.reset();msg.textContent="";setMe(r.data)}else{say(msg,errText(r),"err");if(r.status===422&&authMode==="reg")loadTypes()}
 };
 setAuthMode("reg");
+/* telefon maskasi: +998 | 90 123 45 67 (kursor joyi saqlanadi) */
+const fmtPhone=d=>[d.slice(0,2),d.slice(2,5),d.slice(5,7),d.slice(7,9)].filter(Boolean).join(" ");
+const phoneDigits=v=>{let d=v.replace(/\D/g,"");if(d.length>9&&d.startsWith("998"))d=d.slice(3);return d.slice(0,9)};
+$("a-phone").addEventListener("input",e=>{const f=e.target,pos=f.selectionStart??f.value.length;
+  const before=f.value.slice(0,pos).replace(/\D/g,"").length,raw=f.value.replace(/\D/g,"");
+  const cut=raw.length>9&&raw.startsWith("998")?3:0;f.value=fmtPhone(phoneDigits(f.value));
+  let n=Math.max(0,before-cut),i=0;while(i<f.value.length&&n>0){if(/\d/.test(f.value[i]))n--;i++}
+  if(document.activeElement===f)f.setSelectionRange(i,i)});
+["a-pin","a-pin2"].forEach(id=>$(id).addEventListener("input",e=>{e.target.value=e.target.value.replace(/\D/g,"").slice(0,4)}));
+/* tashrif buyuruvchi turlari — moderator /mod da boshqaradi */
+async function loadTypes(){const r=await api("/visitor-types");if(!r.ok)return;const s=$("a-type"),cur=s.value;
+  s.querySelectorAll("option[value]:not([value=''])").forEach(o=>o.remove());
+  r.data.types.forEach(t=>{const o=el("option",{value:String(t.id)});o.textContent=t.name;s.append(o)});
+  s.value=r.data.types.some(t=>String(t.id)===cur)?cur:"";applyScript(s)}
+loadTypes();
 
 /* ---------- winners (server) ---------- */
 const fmtTime=iso=>new Date(iso).toLocaleTimeString("uz-UZ",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Tashkent",hour12:false});

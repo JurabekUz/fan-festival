@@ -26,6 +26,7 @@ class RegisterIn(BaseModel):
     last_name: str
     phone: str
     pin: str
+    visitor_type_id: int
 
     _p = field_validator("pin")(_pin)
 
@@ -43,6 +44,14 @@ class LoginIn(BaseModel):
     pin: str
 
     _p = field_validator("pin")(_pin)
+
+
+def check_type(con, tid):
+    """Faqat faol tur tanlanishi mumkin (eski foydalanuvchilarda bazada NULL bo'lishi mumkin)."""
+    if not con.execute(
+            "SELECT 1 FROM visitor_types WHERE id=? AND active=1", (tid,)).fetchone():
+        raise HTTPException(422, "Bunday tashrif buyuruvchi turi yo'q")
+    return tid
 
 
 class CheckinIn(BaseModel):
@@ -65,6 +74,7 @@ def user_view(con, u):
         "first_name": u["first_name"], "last_name": u["last_name"],
         "phone": u["phone"], "passport_no": u["passport_no"],
         "stamps": stamps, "wins": wins, "plays": plays,
+        "visitor_type_id": u["visitor_type_id"],
     }
 
 
@@ -75,10 +85,11 @@ def register(body: RegisterIn, resp: Response):
         raise HTTPException(422, "Telefon raqami noto'g'ri. Masalan: 90 123 45 67")
     pin_hash = auth.hash_pin(body.pin)
     with db.tx() as con:
+        check_type(con, body.visitor_type_id)
         try:
             cur = con.execute(
-                "INSERT INTO users(first_name,last_name,phone,pin_hash,created_at) VALUES(?,?,?,?,?)",
-                (body.first_name, body.last_name, phone, pin_hash, db.now_iso()))
+                "INSERT INTO users(first_name,last_name,phone,pin_hash,created_at,visitor_type_id) VALUES(?,?,?,?,?,?)",
+                (body.first_name, body.last_name, phone, pin_hash, db.now_iso(), body.visitor_type_id))
         except sqlite3.IntegrityError:
             raise HTTPException(409, "Bu raqam allaqachon ro'yxatdan o'tgan. «Kirish» ni bosing.")
         uid = cur.lastrowid
@@ -137,6 +148,13 @@ def me(ff_session: str | None = Cookie(default=None)):
     with db.tx() as con:
         u = _need_user(con, ff_session)
         return user_view(con, u)
+
+
+@router.get("/visitor-types")
+def visitor_types():
+    with db.tx() as con:
+        return {"types": [dict(r) for r in con.execute(
+            "SELECT id,name FROM visitor_types WHERE active=1 ORDER BY sort,id")]}
 
 
 @router.post("/checkin")

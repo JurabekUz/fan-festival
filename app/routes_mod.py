@@ -3,11 +3,12 @@ import io
 import json
 import re
 import secrets
+import sqlite3
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel, Field
 
-from . import auth, config, db, draw, live
+from . import auth, config, db, draw, live, xlsx
 
 router = APIRouter(prefix="/api/mod")
 UZ = "'+5 hours'"  # Toshkent vaqti (UTC+5)
@@ -65,12 +66,17 @@ def stats(mod: str = Depends(auth.require_mod)):
             f"SELECT strftime('%H', created_at, {UZ}) h, COUNT(*) c FROM users GROUP BY h")}
         hourly_checkins = {r["h"]: r["c"] for r in con.execute(
             f"SELECT strftime('%H', created_at, {UZ}) h, COUNT(*) c FROM checkins GROUP BY h")}
+        by_type = [dict(r) for r in con.execute(
+            """SELECT t.id, t.name, t.active, COUNT(u.id) c FROM visitor_types t
+               LEFT JOIN users u ON u.visitor_type_id=t.id GROUP BY t.id ORDER BY t.sort, t.id""")]
+        by_type.append({"id": None, "name": "Белгиланмаган", "active": 1, "c": con.execute(
+            "SELECT COUNT(*) c FROM users WHERE visitor_type_id IS NULL").fetchone()["c"]})
         rounds = con.execute("SELECT COUNT(*) c FROM draw_rounds WHERE cancelled=0").fetchone()["c"]
         winners = con.execute(
             """SELECT COUNT(DISTINCT e.user_id) c FROM draw_entries e JOIN draw_rounds r
                ON r.id=e.round_id WHERE r.cancelled=0 AND e.won=1""").fetchone()["c"]
     return {
-        "total_users": total, "by_zone": by_zone, "stamp_distribution": dist,
+        "total_users": total, "by_type": by_type, "by_zone": by_zone, "stamp_distribution": dist,
         "full_passports": dist[config.ZONE_COUNT],
         "hourly_users": hourly_users, "hourly_checkins": hourly_checkins,
         "rounds": rounds, "distinct_winners": winners,
@@ -78,7 +84,8 @@ def stats(mod: str = Depends(auth.require_mod)):
 
 
 USER_SQL = """
-SELECT u.id,u.first_name,u.last_name,u.phone,u.passport_no,u.blocked,u.created_at,
+SELECT u.id,u.first_name,u.last_name,u.phone,u.passport_no,u.blocked,u.created_at,u.visitor_type_id,
+  (SELECT name FROM visitor_types t WHERE t.id=u.visitor_type_id) AS visitor_type,
   (SELECT COUNT(*) FROM checkins c WHERE c.user_id=u.id) AS stamps,
   (SELECT COUNT(*) FROM draw_entries e JOIN draw_rounds r ON r.id=e.round_id
      WHERE e.user_id=u.id AND r.cancelled=0) AS plays,
@@ -91,6 +98,7 @@ FROM users u"""
 
 @router.get("/users")
 def users(q: str = "", status: str = "all", played: str = "all", won: str = "all", sort: str = "new",
+          vtype: str = "all",
           limit: int = Query(100, le=5000), offset: int = 0,
           mod: str = Depends(auth.require_mod)):
     where, args = ["1=1"], []
@@ -100,6 +108,11 @@ def users(q: str = "", status: str = "all", played: str = "all", won: str = "all
         where.append("(u.first_name LIKE ? OR u.last_name LIKE ? OR u.passport_no LIKE ?"
                      + (" OR u.phone LIKE ?" if digits else "") + ")")
         args += [f"%{q}%"] * 3 + ([f"%{digits}%"] if digits else [])
+    if vtype == "none":
+        where.append("u.visitor_type_id IS NULL")
+    elif vtype.isdigit():
+        where.append("u.visitor_type_id=?")
+        args.append(int(vtype))
     sql = f"SELECT * FROM ({USER_SQL} WHERE {' AND '.join(where)}) WHERE 1=1"
     if status == "eligible":      # 9/9, bloklanmagan
         sql += f" AND stamps>={config.ZONE_COUNT} AND blocked=0"
@@ -170,6 +183,93 @@ def set_stamp(uid: int, body: StampIn, mod: str = Depends(auth.require_mod)):
         else:
             con.execute("DELETE FROM checkins WHERE user_id=? AND zone_id=?", (uid, body.zone))
         db.audit(con, mod, "stamp", {"user": uid, "zone": body.zone, "on": body.on})
+    return {"ok": True}
+
+
+class UserTypeIn(BaseModel):
+    visitor_type_id: int | None = None
+
+
+@router.post("/users/{uid}/type")
+def set_user_type(uid: int, body: UserTypeIn, mod: str = Depends(auth.require_mod)):
+    with db.tx() as con:
+        if body.visitor_type_id is not None and not con.execute(
+                "SELECT 1 FROM visitor_types WHERE id=?", (body.visitor_type_id,)).fetchone():
+            raise HTTPException(422, "Bunday tur yo'q")
+        if not con.execute("UPDATE users SET visitor_type_id=? WHERE id=?", (body.visitor_type_id, uid)).rowcount:
+            raise HTTPException(404, "Topilmadi")
+        db.audit(con, mod, "user_type", {"user": uid, "type": body.visitor_type_id})
+    return {"ok": True}
+
+
+# ---------------- tashrif buyuruvchi turlari ----------------
+class VTypeIn(BaseModel):
+    name: str | None = Field(None, max_length=80)
+    sort: int | None = None
+    active: bool | None = None
+
+
+def _vtype_name(v):
+    v = " ".join((v or "").split())
+    if not v:
+        raise HTTPException(422, "Nomi bo'sh bo'lmasin")
+    return v
+
+
+@router.get("/visitor-types")
+def list_vtypes(mod: str = Depends(auth.require_mod)):
+    with db.tx() as con:
+        return {"types": [dict(r) for r in con.execute(
+            """SELECT t.id,t.name,t.sort,t.active,
+                 (SELECT COUNT(*) FROM users u WHERE u.visitor_type_id=t.id) users
+               FROM visitor_types t ORDER BY t.sort,t.id""")]}
+
+
+@router.post("/visitor-types")
+def create_vtype(body: VTypeIn, mod: str = Depends(auth.require_mod)):
+    name = _vtype_name(body.name)
+    with db.tx() as con:
+        sort = body.sort if body.sort is not None else con.execute(
+            "SELECT COALESCE(MAX(sort),-1)+1 s FROM visitor_types").fetchone()["s"]
+        try:
+            cur = con.execute("INSERT INTO visitor_types(name,sort,active,created_at) VALUES(?,?,?,?)",
+                              (name, sort, int(body.active is not False), db.now_iso()))
+        except sqlite3.IntegrityError:
+            raise HTTPException(409, "Bunday nomli tur bor")
+        db.audit(con, mod, "vtype_create", {"id": cur.lastrowid, "name": name})
+        return {"id": cur.lastrowid}
+
+
+@router.patch("/visitor-types/{tid}")
+def update_vtype(tid: int, body: VTypeIn, mod: str = Depends(auth.require_mod)):
+    sets, args = [], []
+    if body.name is not None:
+        sets.append("name=?"); args.append(_vtype_name(body.name))
+    if body.sort is not None:
+        sets.append("sort=?"); args.append(body.sort)
+    if body.active is not None:
+        sets.append("active=?"); args.append(int(body.active))
+    if not sets:
+        raise HTTPException(422, "O'zgarish yo'q")
+    with db.tx() as con:
+        try:
+            n = con.execute(f"UPDATE visitor_types SET {','.join(sets)} WHERE id=?", args + [tid]).rowcount
+        except sqlite3.IntegrityError:
+            raise HTTPException(409, "Bunday nomli tur bor")
+        if not n:
+            raise HTTPException(404, "Topilmadi")
+        db.audit(con, mod, "vtype_update", {"id": tid, **body.model_dump(exclude_none=True)})
+    return {"ok": True}
+
+
+@router.delete("/visitor-types/{tid}")
+def delete_vtype(tid: int, mod: str = Depends(auth.require_mod)):
+    with db.tx() as con:
+        if con.execute("SELECT 1 FROM users WHERE visitor_type_id=? LIMIT 1", (tid,)).fetchone():
+            raise HTTPException(409, "Bu turdagi ishtirokchilar bor — o'chirish o'rniga o'chirib qo'ying (nofaol)")
+        if not con.execute("DELETE FROM visitor_types WHERE id=?", (tid,)).rowcount:
+            raise HTTPException(404, "Topilmadi")
+        db.audit(con, mod, "vtype_delete", {"id": tid})
     return {"ok": True}
 
 
@@ -351,9 +451,9 @@ def export_users(mod: str = Depends(auth.require_mod)):
             zones.setdefault(r["user_id"], set()).add(r["zone_id"])
         rows = con.execute(f"{USER_SQL} ORDER BY u.id").fetchall()
         db.audit(con, mod, "export", {"what": "users"})
-    head = ["id", "pasport", "ism", "familiya", "telefon", "ro'yxatdan o'tgan", "muhrlar", "o'ynagan", "yutgan",
+    head = ["id", "pasport", "ism", "familiya", "telefon", "turi", "ro'yxatdan o'tgan", "muhrlar", "o'ynagan", "yutgan",
             "oxirgi yutuq", "bloklangan"] + [f"maydon{z}" for z in range(1, 10)]
-    data = [[r["id"], r["passport_no"], r["first_name"], r["last_name"], r["phone"], r["created_at"],
+    data = [[r["id"], r["passport_no"], r["first_name"], r["last_name"], r["phone"], r["visitor_type"] or "", r["created_at"],
              r["stamps"], r["plays"], r["wins"], r["last_win"] or "", r["blocked"]]
             + [1 if z in zones.get(r["id"], ()) else 0 for z in range(1, 10)] for r in rows]
     return _csv("ishtirokchilar.csv", head, data)
@@ -375,3 +475,42 @@ def export_rounds(mod: str = Depends(auth.require_mod)):
             data.append(base + ["", "", ""])
     return _csv("raundlar.csv", ["raund", "vaqt", "moderator", "usul", "N", "ehtimol%", "sovga", "izoh",
                                  "maydon", "holat", "g'olib", "pasport", "telefon"], data)
+
+
+# ---------------- Excel ----------------
+def _xlsx(name, data: bytes):
+    return Response(data, media_type=xlsx.MIME, headers={"Content-Disposition": f'attachment; filename="{name}"'})
+
+
+@router.get("/export/users.xlsx")
+def export_users_xlsx(mod: str = Depends(auth.require_mod)):
+    with db.tx() as con:
+        zones = {}
+        for r in con.execute("SELECT user_id,zone_id FROM checkins"):
+            zones.setdefault(r["user_id"], set()).add(r["zone_id"])
+        rows = con.execute(f"{USER_SQL} ORDER BY u.id").fetchall()
+        db.audit(con, mod, "export", {"what": "users.xlsx"})
+    head = ["ID", "Pasport", "Ism", "Familiya", "Telefon", "Turi", "Ro'yxatdan o'tgan", "Muhrlar", "O'ynagan",
+            "Yutgan", "Oxirgi yutuq", "Bloklangan"] + [f"Maydon {z}" for z in range(1, 10)]
+    data = [[r["id"], r["passport_no"], r["first_name"], r["last_name"], r["phone"], r["visitor_type"] or "",
+             r["created_at"], r["stamps"], r["plays"], r["wins"], r["last_win"], "ha" if r["blocked"] else ""]
+            + ["✓" if z in zones.get(r["id"], ()) else "" for z in range(1, 10)] for r in rows]
+    return _xlsx("ishtirokchilar.xlsx", xlsx.build(
+        "Ishtirokchilar", head, data, time_cols={6, 10}, center_cols={0, 7, 8, 9, 11, *range(12, 21)}))
+
+
+@router.get("/export/rounds.xlsx")
+def export_rounds_xlsx(mod: str = Depends(auth.require_mod)):
+    with db.tx() as con:
+        rs = _rounds(con)
+        db.audit(con, mod, "export", {"what": "rounds.xlsx"})
+    mode = {"top_n": "N ta g'olib", "chance": "Ehtimollik"}
+    data = []
+    for r in rs:
+        base = [r["id"], r["created_at"], r["moderator"], mode.get(r["mode"], r["mode"]), r["n"],
+                r["chance_pct"], r["prize"], r["note"], r["pool_size"], "bekor" if r["cancelled"] else ""]
+        for w in r["winners"] or [None]:
+            data.append(base + ([w["name"], w["passport_no"], w["phone"]] if w else ["", "", ""]))
+    head = ["Raund", "Vaqt", "Moderator", "Usul", "N", "Ehtimol %", "Sovg'a", "Izoh", "Maydon", "Holat",
+            "G'olib", "Pasport", "Telefon"]
+    return _xlsx("raundlar.xlsx", xlsx.build("Raundlar", head, data, time_cols={1}, center_cols={0, 4, 5, 8, 9}))

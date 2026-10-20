@@ -50,6 +50,7 @@ def seed(count, pin, stamps):
     added = 0
     with db.tx() as con:
         used = {r["phone"] for r in con.execute("SELECT phone FROM users WHERE phone LIKE ?", (PREFIX + "%",))}
+        types = [r["id"] for r in con.execute("SELECT id FROM visitor_types WHERE active=1")] or [None]
         free = (p for p in (f"{PREFIX}{i:07d}" for i in range(10_000_000)) if p not in used)
         for phone in free:
             if added >= count:
@@ -58,8 +59,8 @@ def seed(count, pin, stamps):
             last = random.choice(LAST_NAMES)
             try:
                 cur = con.execute(
-                    "INSERT INTO users(first_name,last_name,phone,pin_hash,created_at) VALUES(?,?,?,?,?)",
-                    (first, last, phone, pin_hash, db.now_iso()))
+                    "INSERT INTO users(first_name,last_name,phone,pin_hash,created_at,visitor_type_id) VALUES(?,?,?,?,?,?)",
+                    (first, last, phone, pin_hash, db.now_iso(), random.choice(types)))
             except sqlite3.IntegrityError:
                 continue
             uid = cur.lastrowid

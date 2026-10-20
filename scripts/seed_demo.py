@@ -13,7 +13,8 @@ names = ["Aziz", "Dilnoza", "Jasur", "Madina", "Bekzod", "Zilola", "Sardor", "Ni
 for i in range(n):
     c = httpx.Client(base_url=base)
     r = c.post("/api/register", json={"first_name": random.choice(names), "last_name": f"Demo{i}",
-                                      "phone": f"93 700 {i:04d}", "pin": "1234"})
+                                      "phone": f"93 700 {i:04d}", "pin": "1234",
+                                      "visitor_type_id": random.randint(1, 6)})
     if r.status_code != 200:
         continue
     for z in random.sample(range(1, 10), random.choice([9, 9, 9, 7, 5, 3])):

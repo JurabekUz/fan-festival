@@ -15,7 +15,7 @@ base = sys.argv[2] if len(sys.argv) > 2 else "http://localhost:8000"
 def one(i):
     c = httpx.Client(base_url=base, timeout=30)
     r = c.post("/api/register", json={"first_name": "Load", "last_name": str(i),
-                                      "phone": f"{91 + i // 10_000_000:02d} {i % 10_000_000:07d}"[:12], "pin": "1234"})
+                                      "phone": f"{91 + i // 10_000_000:02d} {i % 10_000_000:07d}"[:12], "pin": "1234", "visitor_type_id": 1})
     if r.status_code != 200:
         return 0
     for z, code in config.ZONE_CODES.items():

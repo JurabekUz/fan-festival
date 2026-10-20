@@ -25,7 +25,8 @@ def register(client, n, stamps=9, phone=None):
     from app.main import app
     c = TestClient(app)
     r = c.post("/api/register", json={"first_name": f"Ism{n}", "last_name": f"Fam{n}",
-                                      "phone": phone or f"90 100 {n:04d}", "pin": "1234"})
+                                      "phone": phone or f"90 100 {n:04d}", "pin": "1234",
+                                      "visitor_type_id": 1})
     assert r.status_code == 200, r.text
     for z in range(1, stamps + 1):
         assert c.post("/api/checkin", json={"zone": z, "code": f"{z}{z}{z}{z}"}).status_code == 200
